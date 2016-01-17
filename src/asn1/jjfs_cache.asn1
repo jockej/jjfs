@@ -1,0 +1,21 @@
+JjfsCache DEFINITIONS ::= BEGIN
+
+-- A file
+JjfsFile ::= SEQUENCE {
+    -- name of the file
+    name PrintableString,
+    -- size in bytes
+    size INTEGER
+}
+
+-- A directory
+JjfsDir ::= SEQUENCE {
+    -- name of this directory
+    name PrintableString,
+    -- files in this directory
+    files SEQUENCE OF JjfsFile,
+    -- subdirectories of this directory
+    subdirs SEQUENCE OF JjfsDir
+}
+
+END

@@ -1,0 +1,19 @@
+# List of servers
+
+servers (
+         # Address of this server
+        {addr = "my.sshserver.com";
+         # Port to connect to
+         port = 22;
+         # Top dir on the server
+         top_dir = "~/movie_dir_on_server";
+         # Cache file, default is '~/.jjfs/my.sshserver.com-cache'
+         cache_file = "~/.jjfs/my-sshserver-cache";
+         # Default mountpint, can be overridden when mounting
+         default_mp = "~/good_movies";},
+         # You can have more servers
+        {addr = "my.other.sshserver.com";
+         port = 10022;
+         top_dir = "~/movie_dir_on_this_server";
+         default_mp = "~/bad_movies";}
+         );
