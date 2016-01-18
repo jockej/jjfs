@@ -1,19 +1,29 @@
-# List of servers
 
-servers (
+prefetch_size = 1000000;
+
+staging_dir = "~/.jjfs/stage/";
+
+# List of servers
+mountpoints = {
+         # Name of this mountpoint
+         good_movies = {
          # Address of this server
-        {addr = "my.sshserver.com";
+         server = "my.sshserver.com";
          # Port to connect to
          port = 22;
          # Top dir on the server
          top_dir = "~/movie_dir_on_server";
-         # Cache file, default is '~/.jjfs/my.sshserver.com-cache'
+         # Cache file, default is '~/.jjfs/<name>-cache'
          cache_file = "~/.jjfs/my-sshserver-cache";
-         # Default mountpint, can be overridden when mounting
-         default_mp = "~/good_movies";},
-         # You can have more servers
-        {addr = "my.other.sshserver.com";
+         # Default mountpint, can be overridden when mounting. If none is given,
+         # it defaults to "~/<name>", so this for example would have been
+         # "~/good_movies" hadn't it been for the line below.
+         mount_on = "~/movies";};
+         # You can have more mountpoints
+         bad_movies = {
+         # This is a minimal config, cache file and mountpoint will be set
+         # according to 'name'.
+         server = "my.other.sshserver.com";
          port = 10022;
          top_dir = "~/movie_dir_on_this_server";
-         default_mp = "~/bad_movies";}
-         );
+         };};
