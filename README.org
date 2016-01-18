@@ -1,2 +1,47 @@
-# jjfs
-A peculiar fuse filesystem
+* jjfs
+
+A peculiar fuse filesystem.
+
+** Why jjfs?
+
+*** Background
+
+I have my movies on a server in my living room. They are on a 6 x 3TB raidz2
+array. Out of concern for the environment and my hearing I want to keep those
+disks spinning as little as possible, they are set to spin down after ten
+minutes (or something like that).
+
+*** What I do now
+
+Right now I do something like the following when I wan't to watch a movie:
+
+- Navigate to a 'temp' directory on my ssd (=~/tmpvideos= in my case).
+- Sftp to my server.
+- Browse the files to find a movie I want to see.
+- =get -r= the directory of that movie.
+- Wait for the transfer to complete (usually like one minute).
+- Start mplayer on the fetched file.
+
+*** What I'd like to do
+
+- Browse the files like I browse any other files.
+- Start mplayer directly on that file.
+
+*** Solution
+
+One solution which would allow me to do what I'd like would be to use sshfs,
+however that would keep the rust spinning on the server, something I definitely
+want to avoid.
+
+So 
+
+** Building and installing
+
+
+
+** Using
+
+
+
+
+** Example
