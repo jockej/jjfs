@@ -6,19 +6,21 @@ staging_dir = "~/.jjfs/stage/";
 # List of servers
 mountpoints = {
          # Name of this mountpoint
-         good_movies = {
+         serv_movies = {
          # Address of this server
-         server = "my.sshserver.com";
+         server = "192.168.2.200";
          # Port to connect to
          port = 22;
+         # User to connect as
+         user = "joakim";
          # Top dir on the server
-         top_dir = "~/movie_dir_on_server";
+         top_dir = "~/movies";
          # Cache file, default is '~/.jjfs/<name>-cache'
-         cache_file = "~/.jjfs/my-sshserver-cache";
+         cache_file = "~/.jjfs/movies-cache";
          # Default mountpint, can be overridden when mounting. If none is given,
          # it defaults to "~/<name>", so this for example would have been
-         # "~/good_movies" hadn't it been for the line below.
-         mount_on = "~/movies";};
+         # "~/serv_movies" hadn't it been for the line below.
+         mountp = "~/smovies";};
          # You can have more mountpoints
          bad_movies = {
          # This is a minimal config, cache file and mountpoint will be set

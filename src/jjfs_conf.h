@@ -17,10 +17,14 @@
 
 #include <libconfig.h>
 
-int jjfs_read_conf(const char *conf_file, const char *mountpint);
+void jjfs_read_conf(const char *conf_file, const char *mountpoint);
 
 const char *jjfs_get_server();
 
 const char *jjfs_get_top_dir();
 
-int jjfs_get_port();
+const char *jjfs_get_user();
+
+const char *jjfs_get_sshconfig();
+
+const int * const jjfs_get_port();

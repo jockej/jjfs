@@ -16,9 +16,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include <libssh/libssh.h>
+#include <libssh/sftp.h>
 
 int jjfs_conn();
 
 int jjfs_disconn();
+
+sftp_session jjfs_sftp();
+
+ssh_session jjfs_ssh();
 
 #endif /* ifndef JJFS_SFTP_H */

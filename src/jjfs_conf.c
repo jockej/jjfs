@@ -33,36 +33,38 @@
 #define JJFS_DEFAULT_PREFETCH_SIZE 10485760
 #endif
 
-static const char *server, *top_dir;
+static const char *server, *top_dir, *user, *sshconfig;
 
 static int port, prefetch_bytes;
 
-const char *jjfs_get_server() {
-  return server;
-}
+#define JJFS_STR_VAR(name)                      \
+  const char *jjfs_get_##name() {               \
+    return name;                                \
+  }
 
-const char *jjfs_get_top_dir() {
-  return top_dir;
-}
+JJFS_STR_VAR(server);
+JJFS_STR_VAR(user);
+JJFS_STR_VAR(top_dir);
+JJFS_STR_VAR(sshconfig);
 
-int jjfs_get_port() {
-  return port;
+const int * const jjfs_get_port() {
+  return &port;
 }
 
 int jjfs_prefetch_bytes() {
   return prefetch_bytes;
 }
 
-static inline char *jjfs_wordexp(const char *str) {
+static char *jjfs_wordexp(const char *str) {
   if (str[0] == '~' && str[1] == '/') {
     char *homedir = getenv("HOME");
     if (!homedir) JJFS_DIE("Can't expand \"~\", $HOME not set.\n");
-    char *ret = malloc(MAX_PATH_LEN);
+    char *ret = (char*)malloc(MAX_PATH_LEN);
     strncpy(ret, homedir, 200);
     strncat(ret, str + 2, 200);
     return ret;
   } else {
-    return str;
+    return (char*)str;
   }
 }
 
@@ -105,7 +107,7 @@ static inline char *jjfs_wordexp(const char *str) {
   } while(0)
 
 
-int jjfs_read_conf(const char *conf_file, const char *mountpoint) {
+void jjfs_read_conf(const char *conf_file, const char *mountpoint) {
 
   config_t cfg;
 
@@ -124,5 +126,6 @@ int jjfs_read_conf(const char *conf_file, const char *mountpoint) {
   JJFS_READ_VAR_OR_DIE_MP(mountpoint, server, string);
   JJFS_READ_VAR_OR_DIE_MP(mountpoint, port, int);
   JJFS_READ_VAR_OR_DIE_MP(mountpoint, top_dir, string);
-  return 0;
+  JJFS_READ_VAR_OR_DEFAULT_MP(mountpoint, user, string, NULL);
+  JJFS_READ_VAR_OR_DEFAULT(sshconfig, string, NULL);
 }
