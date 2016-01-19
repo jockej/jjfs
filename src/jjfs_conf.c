@@ -16,6 +16,8 @@
  */
 
 #include <stdio.h>
+#include <limits.h>
+#define MAX_PATH_LEN 1024
 #include "jjfs_conf.h"
 #include "jjfs_misc.h"
 
@@ -33,7 +35,7 @@
 
 static const char *server, *top_dir;
 
-static int port, prefetch_size;
+static int port, prefetch_bytes;
 
 const char *jjfs_get_server() {
   return server;
@@ -47,32 +49,36 @@ int jjfs_get_port() {
   return port;
 }
 
-#define JJFS_STRCPY(lino, dest, ptr, str)                               \
-  do {                                                                  \
-    size_t n = strnlen(str, JJFS_MAX_CONF_ELEM_LEN + 1);                \
-    if (n == JJFS_MAX_CONF_ELEM_LEN + 1)                                \
-      JJFS_DIE_LINO_FILE(lino, __FILE__, "Conf parameter too long!\n"); \
-    else {                                                              \
-      strcpy(dest, str);                                                \
-      ptr += n;                                                         \
-    }                                                                   \
-  } while(0)                                                            \
+int jjfs_prefetch_bytes() {
+  return prefetch_bytes;
+}
+
+static inline char *jjfs_wordexp(const char *str) {
+  if (str[0] == '~' && str[1] == '/') {
+    char *homedir = getenv("HOME");
+    if (!homedir) JJFS_DIE("Can't expand \"~\", $HOME not set.\n");
+    char *ret = malloc(MAX_PATH_LEN);
+    strncpy(ret, homedir, 200);
+    strncat(ret, str + 2, 200);
+    return ret;
+  } else {
+    return str;
+  }
+}
 
 #define JJFS_READ_VAR_OR_DIE_LINO_MP(lino, mp, var, config_type)        \
   do {                                                                  \
-    char path[JJFS_MAX_CONF_PATH_LEN];                                  \
-    char *ptr = path;                                                   \
-    JJFS_STRCPY(lino, path, ptr, "mountpoints.");                       \
-    JJFS_STRCPY(lino, ptr, ptr, mp);                                    \
-    JJFS_STRCPY(lino, ptr, ptr, ".");                                   \
-    JJFS_STRCPY(lino, ptr, ptr, #var);                                  \
+    char path[MAX_PATH_LEN] = "mountpoints.";                           \
+    strncat(path, mp, JJFS_MAX_CONF_ELEM_LEN);                          \
+    strncat(path, ".", 1);                                              \
+    strncat(path, #var, JJFS_MAX_CONF_ELEM_LEN);                        \
     if (config_lookup_##config_type(&cfg, path, &var) != CONFIG_TRUE)   \
       JJFS_DIE_LINO_FILE(lino, __FILE__, "Could not read var \"%s\"\n", path); \
   } while(0)
 
 #define JJFS_READ_VAR_OR_DIE_LINO(lino, var, config_type)               \
   do {                                                                  \
-    if (config_lookup_##config_type(&cfg, #var, &var) != CONFIG_TRUE)                 \
+    if (config_lookup_##config_type(&cfg, #var, &var) != CONFIG_TRUE)   \
       JJFS_DIE_LINO_FILE(lino, __FILE__, "Could not read var \"%s\"\n", #var); \
   } while(0)
 
@@ -84,23 +90,18 @@ int jjfs_get_port() {
 
 #define JJFS_READ_VAR_OR_DEFAULT_MP(mp, var, config_type, dflt)         \
   do {                                                                  \
-    char path[JJFS_MAX_CONF_PATH_LEN];                                  \
-    char *ptr = path;                                                   \
-    JJFS_STRCPY(lino, path, ptr, "mountpoints.");                       \
-    JJFS_STRCPY(lino, path, ptr, mp);                                   \
-    JJFS_STRCPY(lino, path, ptr, ".");                                  \
-    JJFS_STRCPY(lino, path, ptr, #var);                                 \
-    if (config_lookup_##config_type(&cfg, path, &var) != CONFIG_TRUE) { \
-      fprintf(stderr, "Can't read %s from conf file, using default: %s\n"\
-              , path, #dflt);                                           \
+    char path[MAX_PATH_LEN] = "mountpoints.";                           \
+    strncat(path, mp, JJFS_MAX_CONF_ELEM_LEN);                          \
+    strncat(path, ".", 1);                                              \
+    strncat(path, #var, JJFS_MAX_CONF_ELEM_LEN);                        \
+    if (config_lookup_##config_type(&cfg, path, &var) != CONFIG_TRUE)   \
       var = dflt;                                                       \
-}\
   } while(0)
 
 #define JJFS_READ_VAR_OR_DEFAULT(var, config_type, dflt)                \
   do {                                                                  \
     if (config_lookup_##config_type(&cfg, #var, &var) != CONFIG_TRUE)   \
-      var = dflt;\
+      var = dflt;                                                       \
   } while(0)
 
 
@@ -119,7 +120,7 @@ int jjfs_read_conf(const char *conf_file, const char *mountpoint) {
     JJFS_DIE("Couldn't read conf file: %s!\n", cf);
   }
 
-  JJFS_READ_VAR_OR_DEFAULT(prefetch_size, int, JJFS_DEFAULT_PREFETCH_SIZE);  
+  JJFS_READ_VAR_OR_DEFAULT(prefetch_bytes, int, JJFS_DEFAULT_PREFETCH_SIZE);
   JJFS_READ_VAR_OR_DIE_MP(mountpoint, server, string);
   JJFS_READ_VAR_OR_DIE_MP(mountpoint, port, int);
   JJFS_READ_VAR_OR_DIE_MP(mountpoint, top_dir, string);
