@@ -22,15 +22,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define JJFS_DIE_LINO_FILE(lino, file, format, ...)                     \
+#define JJFS_DIE_LINO_FILE(lino, file, ...)                     \
   do {                                                                  \
-    if (errno != 0)                                                     \
-      fprintf(stderr, "%s, %d: %s\n", file, lino, strerror(errno));     \
-    fprintf(stderr, format, ##__VA_ARGS__);                             \
+    if (errno) fprintf(stderr, "%s, %d: %s\n", file, lino, strerror(errno)); \
+    fprintf(stderr, ##__VA_ARGS__);                             \
     exit(EXIT_FAILURE);                                                 \
   } while(0)
 
-#define JJFS_DIE(format, ...) \
-  JJFS_DIE_LINO_FILE(__LINE__, __FILE__, format, __VA_ARGS__)
+#define JJFS_DIE(...) \
+  JJFS_DIE_LINO_FILE(__LINE__, __FILE__,  __VA_ARGS__)
 
 #endif /* ifndef JJFS_MISC_H */
