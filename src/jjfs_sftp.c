@@ -14,18 +14,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#include "libssh/sftp.h"
+#include <libssh/libssh.h>
+#include <libssh/sftp.h>
+#include <stdlib.h>
 #include "jjfs_sftp.h"
+#include "jjfs_misc.h"
 
-const char * jjfs_server;
-
-int jjfs_port;
 
 ssh_session ssh;
 sftp_session sftp;
 
 int jjfs_conn() {
+  ssh = ssh_new();
+  if (!ssh) JJFS_DIE("Couldn't allocate ssh session\n");
+
+  ssh_options_set(ssh, SSH_OPTIONS_HOST, jjfs_get_server());
+  ssh_options_set(ssh, SSH_OPTIONS_PORT, jjfs_get_port());
+  
+  ssh_options_set(ssh, SSH_OPTIONS_PORT, jjfs_get_port());  
   
 }
 
