@@ -19,6 +19,7 @@
 #include <limits.h>
 #include "jjfs_conf.h"
 #include "jjfs_sftp.h"
+#include "jjfs_cache.h"
 
 
 int main(int argc, char **argv) {
@@ -40,23 +41,7 @@ int main(int argc, char **argv) {
   printf("Port: %d\n", *jjfs_get_port());
   printf("Top_dir %s\n", jjfs_get_top_dir());
 
-  printf("Connecting\n");
-  int r = jjfs_conn();
-  if (r == -1) {
-    jjfs_disconn();
-    printf("sftp error\n");
-    return 1;
-  }
-
-  sftp_session s = jjfs_sftp();
-  printf("Open dir\n");
-  sftp_dir sd = sftp_opendir(s, jjfs_get_top_dir());
-
-  if (!sd) {
-    printf("No dir: %s\n", ssh_get_error(jjfs_ssh()));
-    return 2;
-  }
-
-  jjfs_disconn();
+  jjfs_cache_rebuild();
+  
   return 0;
 }

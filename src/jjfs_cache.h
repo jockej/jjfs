@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include <stdlib.h>
 
 typedef struct jjfs_cache_file {
   const char * name;
@@ -27,17 +28,17 @@ typedef struct jjfs_cache_dir {
   const jjfs_cache_dir *next, *subdirs;
 } jjfs_cache_dir;
 
-enum jjfs_cache_type = {
+typedef enum {
   JJFS_CACHE_DIR,
   JJFS_CACHE_FILE
-}
+} jjfs_cache_type;
 
 typedef struct {
   jjfs_cache_type tag;
   union {
     jjfs_cache_file file;
     jjfs_cache_dir dir;
-  }
+  };
 } jjfs_cache_entry;
 
 #define JJFS_IS_DIR(entry) (entry->tag == JJFS_CACHE_DIR)

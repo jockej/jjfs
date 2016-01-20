@@ -17,6 +17,7 @@
 
 #include "jjfs_cache.h"
 #include "jjfs_conf.h"
+#include "jjfs_sftp.h"
 #include "asn1/JjfsDir.h"
 #include "asn1/JjfsFile.h"
 
@@ -48,11 +49,30 @@ static void jjfs_cache_decode() {
 }
 #endif
 
+static int jjfs_read_dir(sftp_session sftp, sftp_dir dir) {
+  sftp_attributes attr;
+  do {
+    attr = sftp_readdir(sftp, dir);
+    if (attr->type == SSH_FILEXFER_TYPE_DIRECTORY)
+      printf("Trying to open %s as dir\n", attr->name);
+  } while(attr);
+
+  sftp_attributes_free(attr);
+  return 0;
+}
+
 int jjfs_cache_rebuild() {
   const char *cache_file = jjfs_get_cache_file();
-
-
   
+  jjfs_conn();
+  sftp_session sftp = jjfs_sftp();
+  sftp_dir d = sftp_opendir(sftp, jjfs_get_top_dir());
+
+  jjfs_read_dir(sftp, d);
+  
+  
+
+  return 0;
 }
 
 static void jjfs_cache_read() {
@@ -61,7 +81,10 @@ static void jjfs_cache_read() {
 }
 
 int jjfs_cache_init() {
+  jjfs_cache_rebuild();
 
+  
+  return 0;
 }
 
 void jjfs_cache_free() {

@@ -16,6 +16,7 @@
  */
 
 #include <stdio.h>
+#include <libconfig.h>
 #include "jjfs_conf.h"
 #include "jjfs_misc.h"
 
@@ -85,33 +86,33 @@ int jjfs_prefetch_bytes() {
   }
 #endif
 
-#define JJFS_READ_STR_OR_DIE_LINO(lino, mp, var)        \
-  do {\
-  JJFS_PATH(mp, var)                                                    \
-  const char *tmp_##var;                                                \
-  if (config_lookup_string(&cfg, path, &tmp_##var) != CONFIG_TRUE) {    \
+#define JJFS_READ_STR_OR_DIE_LINO(lino, mp, var)                        \
+  do {                                                                  \
+    JJFS_PATH(mp, var)                                                  \
+      const char *tmp_##var;                                            \
+    if (config_lookup_string(&cfg, path, &tmp_##var) != CONFIG_TRUE) {  \
       JJFS_DIE_LINO_FILE(lino, __FILE__, "Could not read var \"%s\"\n", path); \
-  } else {                                                              \
+    } else {                                                            \
       var = strdup(tmp_##var);                                          \
-  }\
+    }                                                                   \
   } while(0)
 
 #define JJFS_READ_STR_OR_DIE(mp, var)           \
   JJFS_READ_STR_OR_DIE_LINO(__LINE__, mp, var)
 
 #define JJFS_READ_STR_OR_DEFAULT(mp, var, dflt)                        \
-  do {\
-  JJFS_PATH(mp, var)                                                   \
-  const char *tmp_##var = dflt;                                         \
-  config_lookup_string(&cfg, path, &tmp_##var);                        \
-  var = strdup(tmp_##var);\
+  do {                                                                 \
+    JJFS_PATH(mp, var)                                                 \
+    const char *tmp_##var = dflt;                                      \
+    config_lookup_string(&cfg, path, &tmp_##var);                      \
+    var = tmp_##var ? strdup(tmp_##var) : NULL;                        \
   } while(0)
 
 #define JJFS_READ_INT_OR_DEFAULT(mp, var, dflt)                         \
     do {                                                                \
-    JJFS_PATH(mp, var)                                                  \
-    var = dflt;                                                         \
-    config_lookup_int(&cfg, path, &var);                                \
+      JJFS_PATH(mp, var)                                                \
+        var = dflt;                                                     \
+      config_lookup_int(&cfg, path, &var);                              \
     } while(0)    
 
 
@@ -169,17 +170,17 @@ void jjfs_read_conf(const char *conf_file, const char *mountpoint) {
     /* Construct default cache file name */
     char *scratch = (char*)calloc(JJFS_SCRATCH_SIZE, 1);
 #ifdef __OpenBSD__
-    strcpy(scratch, "~");
-    strncat(scratch, JJFS_DIR, sizeof(JJFS_DIR));
-    strncat(scratch, mountpoint, JJFS_MAX_CONF_ELEM_LEN);
-    strncat(scratch, JJFS_CACHE_SUFFIX, sizeof(JJFS_CACHE_SUFFIX));
-#else
     strlcpy(scratch, "~", 1);
     strlcat(scratch, JJFS_DIR, sizeof(JJFS_DIR));
     strlcat(scratch, mountpoint, JJFS_MAX_CONF_ELEM_LEN);
     strlcat(scratch, JJFS_CACHE_SUFFIX, sizeof(JJFS_CACHE_SUFFIX));
+#else
+    strcpy(scratch, "~");
+    strncat(scratch, JJFS_DIR, sizeof(JJFS_DIR));
+    strncat(scratch, mountpoint, JJFS_MAX_CONF_ELEM_LEN);
+    strncat(scratch, JJFS_CACHE_SUFFIX, sizeof(JJFS_CACHE_SUFFIX));
 #endif
-    free((void*) cache_file);
+    free((void*)cache_file);
     cache_file = scratch;
   }
 

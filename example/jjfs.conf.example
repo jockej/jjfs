@@ -13,7 +13,7 @@ serv1 = {
   user = "joakim";
   # Top dir on the server. This _must_ be an absolute path, as I can't be arsed
   # to find the value of $HOME on the remote machine.
-  top_dir = "/home/joakim/jjfs_test";
+  top_dir = "/home/joakim/jjfs-test";
   # Cache file, default is '~/.jjfs/<name>-cache'
   cache_file = "~/.jjfs/movies-cache";
   # Default mountpint, can be overridden when mounting. If none is given,
@@ -26,5 +26,5 @@ serv2 = {
   # according to 'name'.
   server = "jockej.mooo.com";
   port = 20022;
-  top_dir = "/home/joakim/jjfs_test";
+  top_dir = "/home/joakim/jjfs-test";
 };

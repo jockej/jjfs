@@ -14,9 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#include <libconfig.h>
-
 void jjfs_read_conf(const char *conf_file, const char *mountpoint);
 
 const char *jjfs_get_server();
@@ -26,5 +23,7 @@ const char *jjfs_get_top_dir();
 const char *jjfs_get_user();
 
 const char *jjfs_get_sshconfig();
+
+const char *jjfs_get_cache_file();
 
 const int * const jjfs_get_port();
