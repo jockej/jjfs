@@ -63,45 +63,56 @@ int jjfs_prefetch_bytes() {
   return prefetch_bytes;
 }
 
-#define JJFS_PATH(mp, var) \
-  char path[JJFS_SCRATCH_SIZE];\
-  
-
-
+#ifdef __OpenBSD__
+#define JJFS_PATH(mp, var)                              \
+  char path[JJFS_SCRATCH_SIZE] = {0};                   \
+  if (strnlen(mp, 2) > 0) {                             \
+    strlcpy(path, mp, JJFS_MAX_CONF_ELEM_LEN);          \
+    strlcat(path, ".", 1);                              \
+    strlcat(path, #var, JJFS_MAX_CONF_ELEM_LEN);        \
+  } else {                                              \
+    strlcpy(path, #var, JJFS_MAX_CONF_ELEM_LEN);        \
+  }
+#else
+#define JJFS_PATH(mp, var)                      \
+  char path[JJFS_SCRATCH_SIZE] = {0};           \
+  if (strnlen(mp, 2) > 0) {                     \
+    strcpy(path, mp);                           \
+    strcat(path, ".");                          \
+    strcat(path, #var);                         \
+  } else {                                      \
+    strcpy(path, #var);                         \
+  }
+#endif
 
 #define JJFS_READ_STR_OR_DIE_LINO(lino, mp, var)        \
-  do {                                                                  \
-  
-    if (config_lookup_string(&cfg, path, &var) != CONFIG_TRUE)   \
+  do {\
+  JJFS_PATH(mp, var)                                                    \
+  const char *tmp_##var;                                                \
+  if (config_lookup_string(&cfg, path, &tmp_##var) != CONFIG_TRUE) {    \
       JJFS_DIE_LINO_FILE(lino, __FILE__, "Could not read var \"%s\"\n", path); \
+  } else {                                                              \
+      var = strdup(tmp_##var);                                          \
+  }\
   } while(0)
 
 #define JJFS_READ_STR_OR_DIE(mp, var)           \
-  JJFS_READ_STR_OR_DIE_LINO_MP(__LINE__, mp, var, config_type)
+  JJFS_READ_STR_OR_DIE_LINO(__LINE__, mp, var)
 
-#define JJFS_READ_STR_OR_DEFAULT(mp, var, dflt)         \
-  do {                                                                  \
-    var = dflt;                                                         \
-    config_lookup_##config_type(&cfg, path, &var);                      \
+#define JJFS_READ_STR_OR_DEFAULT(mp, var, dflt)                        \
+  do {\
+  JJFS_PATH(mp, var)                                                   \
+  const char *tmp_##var = dflt;                                         \
+  config_lookup_string(&cfg, path, &tmp_##var);                        \
+  var = strdup(tmp_##var);\
   } while(0)
 
-#define JJFS_READ_STR_OR_DEFAULT(var, config_type, dflt)                \
-  do {                                                                  \
+#define JJFS_READ_INT_OR_DEFAULT(mp, var, dflt)                         \
+    do {                                                                \
+    JJFS_PATH(mp, var)                                                  \
     var = dflt;                                                         \
-    config_lookup_##config_type(&cfg, #var, &var);                      \
-  } while(0)
-
-#define JJFS_READ_INT_OR_DEFAULT_MP(mp, var, config_type, dflt)         \
-  do {                                                                  \
-    var = dflt;                                                         \
-    config_lookup_##config_type(&cfg, path, &var);                      \
-  } while(0)
-
-#define JJFS_READ_INT_OR_DEFAULT(var, config_type, dflt)                \
-  do {                                                                  \
-    var = dflt;                                                         \
-    config_lookup_##config_type(&cfg, #var, &var);                      \
-  } while(0)
+    config_lookup_int(&cfg, path, &var);                                \
+    } while(0)    
 
 
 static void jjfs_tilde_expand(const char *path) {
@@ -110,8 +121,13 @@ static void jjfs_tilde_expand(const char *path) {
   char *homedir = getenv("HOME");
   if (!homedir) JJFS_DIE("Can't expand '~', $HOME not set\n");  
   char *scratch = (char*)calloc(JJFS_SCRATCH_SIZE, 1);
+#ifdef __OpenBSD__
+  strlcpy(scratch, homedir, JJFS_MAX_CONF_ELEM_LEN);
+  strlcat(scratch, path, JJFS_MAX_CONF_ELEM_LEN);
+#else
   strcpy(scratch, homedir);
   strcat(scratch, path);
+#endif
   free((void*)path);
   path = scratch;
 }
@@ -132,41 +148,58 @@ void jjfs_read_conf(const char *conf_file, const char *mountpoint) {
   }
 
   /* These must be set */
-  JJFS_READ_VAR_OR_DIE_MP(mountpoint, server, string);
-  JJFS_READ_VAR_OR_DIE_MP(mountpoint, top_dir, string);
+  JJFS_READ_STR_OR_DIE(mountpoint, server);
+  JJFS_READ_STR_OR_DIE(mountpoint, top_dir);
 
-  JJFS_READ_VAR_OR_DEFAULT(prefetch_bytes, int, JJFS_DEFAULT_PREFETCH_SIZE);
-  JJFS_READ_VAR_OR_DEFAULT_MP(mountpoint, port, int, 22);
-  JJFS_READ_VAR_OR_DEFAULT_MP(mountpoint, user, string, NULL);
-  JJFS_READ_VAR_OR_DEFAULT(sshconfig, string, NULL);
-  JJFS_READ_VAR_OR_DEFAULT(staging_dir, string, "~" JJFS_DIR "staging");
+  /* Per mountpoint options */
+  JJFS_READ_INT_OR_DEFAULT(mountpoint, port, 22);
+  JJFS_READ_STR_OR_DEFAULT(mountpoint, user, NULL);
+  JJFS_READ_STR_OR_DEFAULT(mountpoint, mountp, NULL);
+  JJFS_READ_STR_OR_DEFAULT(mountpoint, cache_file, NULL);
 
-  JJFS_READ_VAR_OR_DEFAULT_MP(mountpoint, mountp, string, NULL);
-  JJFS_READ_VAR_OR_DEFAULT_MP(mountpoint, cache_file, string, NULL);
+  /* Global options */
+  JJFS_READ_INT_OR_DEFAULT("", prefetch_bytes, JJFS_DEFAULT_PREFETCH_SIZE);  
+  JJFS_READ_STR_OR_DEFAULT("", sshconfig, NULL);
+  JJFS_READ_STR_OR_DEFAULT("", staging_dir, "~" JJFS_DIR "staging");
 
-  /* Move all strings to memory we control */
-  FOR_ALL_STR_VARS(jjfs_realloc_string);
   /* Then free the config object */
   config_destroy(&cfg);
-  
+
   if (cache_file == NULL) {
     /* Construct default cache file name */
     char *scratch = (char*)calloc(JJFS_SCRATCH_SIZE, 1);
+#ifdef __OpenBSD__
     strcpy(scratch, "~");
     strncat(scratch, JJFS_DIR, sizeof(JJFS_DIR));
     strncat(scratch, mountpoint, JJFS_MAX_CONF_ELEM_LEN);
     strncat(scratch, JJFS_CACHE_SUFFIX, sizeof(JJFS_CACHE_SUFFIX));
+#else
+    strlcpy(scratch, "~", 1);
+    strlcat(scratch, JJFS_DIR, sizeof(JJFS_DIR));
+    strlcat(scratch, mountpoint, JJFS_MAX_CONF_ELEM_LEN);
+    strlcat(scratch, JJFS_CACHE_SUFFIX, sizeof(JJFS_CACHE_SUFFIX));
+#endif
+    free((void*) cache_file);
     cache_file = scratch;
   }
 
   if (mountp == NULL) {
     /* Construct default mountp path */
     char *scratch = (char*)calloc(JJFS_SCRATCH_SIZE, 1);
+#ifdef __OpenBSD__
+    strlcpy(scratch, "~/",2);
+    strlcat(scratch, mountpoint, JJFS_MAX_CONF_ELEM_LEN);
+#else
     strcpy(scratch, "~/");
     strncat(scratch, mountpoint, JJFS_MAX_CONF_ELEM_LEN);
+#endif
+    free((void*)mountp);
     mountp = scratch;
   }
 
   /* Expand all '~/' to '$HOME/' */
-  FOR_ALL_STR_VARS(jjfs_tilde_expand);
+
+  jjfs_tilde_expand(mountp);
+  jjfs_tilde_expand(staging_dir);  
+  jjfs_tilde_expand(cache_file);
 }

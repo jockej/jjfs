@@ -11,7 +11,8 @@ serv1 = {
   port = 22;
   # User to connect as
   user = "joakim";
-  # Top dir on the server
+  # Top dir on the server. This _must_ be an absolute path, as I can't be arsed
+  # to find the value of $HOME on the remote machine.
   top_dir = "/home/joakim/jjfs_test";
   # Cache file, default is '~/.jjfs/<name>-cache'
   cache_file = "~/.jjfs/movies-cache";
