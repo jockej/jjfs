@@ -15,8 +15,38 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-int jjfs_rebuild_cache();
+typedef struct jjfs_cache_file {
+  const char * name;
+  size_t size;
+  jjfs_cache_file *next;
+} jjfs_cache_file;
 
-int jjfs_read_cache();
+typedef struct jjfs_cache_dir {
+  const char *name;
+  const jjfs_cache_file *files;
+  const jjfs_cache_dir *next, *subdirs;
+} jjfs_cache_dir;
 
-jjfs_get_cache_entry(const char *path);
+enum jjfs_cache_type = {
+  JJFS_CACHE_DIR,
+  JJFS_CACHE_FILE
+}
+
+typedef struct {
+  jjfs_cache_type tag;
+  union {
+    jjfs_cache_file file;
+    jjfs_cache_dir dir;
+  }
+} jjfs_cache_entry;
+
+#define JJFS_IS_DIR(entry) (entry->tag == JJFS_CACHE_DIR)
+#define JJFS_IS_FILE(entry) (entry->tag == JJFS_CACHE_FILE)
+
+int jjfs_cache_rebuild();
+
+int jjfs_cache_init();
+
+void jjfs_cache_free();
+  
+jjfs_cache_entry *jjfs_cache_lookup_path(const char *path);
