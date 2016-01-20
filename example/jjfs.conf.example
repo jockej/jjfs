@@ -3,29 +3,27 @@ prefetch_bytes = 1000000;
 
 staging_dir = "~/.jjfs/stage/";
 
-# List of servers
-mountpoints = {
-         # Name of this mountpoint
-         serv_movies = {
-         # Address of this server
-         server = "192.168.2.200";
-         # Port to connect to
-         port = 22;
-         # User to connect as
-         user = "joakim";
-         # Top dir on the server
-         top_dir = "~/movies";
-         # Cache file, default is '~/.jjfs/<name>-cache'
-         cache_file = "~/.jjfs/movies-cache";
-         # Default mountpint, can be overridden when mounting. If none is given,
-         # it defaults to "~/<name>", so this for example would have been
-         # "~/serv_movies" hadn't it been for the line below.
-         mountp = "~/smovies";};
-         # You can have more mountpoints
-         bad_movies = {
-         # This is a minimal config, cache file and mountpoint will be set
-         # according to 'name'.
-         server = "my.other.sshserver.com";
-         port = 10022;
-         top_dir = "~/movie_dir_on_this_server";
-         };};
+# Name of this mountpoint
+serv1 = {
+  # Address of this server
+  server = "192.168.2.200";
+  # Port to connect to
+  port = 22;
+  # User to connect as
+  user = "joakim";
+  # Top dir on the server
+  top_dir = "/home/joakim/jjfs_test";
+  # Cache file, default is '~/.jjfs/<name>-cache'
+  cache_file = "~/.jjfs/movies-cache";
+  # Default mountpint, can be overridden when mounting. If none is given,
+  # it defaults to "~/<name>", so this for example would have been
+  # "~/serv1" hadn't it been for the line below.
+  mountp = "~/smovies";};
+# You can have more mountpoints
+serv2 = {
+  # This is a minimal config, cache file and mountpoint will be set
+  # according to 'name'.
+  server = "jockej.mooo.com";
+  port = 20022;
+  top_dir = "/home/joakim/jjfs_test";
+};
