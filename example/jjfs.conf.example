@@ -19,12 +19,13 @@ serv1 = {
   # Default mountpint, can be overridden when mounting. If none is given,
   # it defaults to "~/<name>", so this for example would have been
   # "~/serv1" hadn't it been for the line below.
-  mountp = "~/smovies";};
+  mountpoint = "~/smovies";};
 # You can have more mountpoints
 serv2 = {
   # This is a minimal config, cache file and mountpoint will be set
   # according to 'name'.
   server = "jockej.mooo.com";
   port = 20022;
+  user = "joakim";
   top_dir = "/home/joakim/jjfs-test";
 };

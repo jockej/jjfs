@@ -20,8 +20,8 @@
 #include "jjfs_conf.h"
 #include "jjfs_misc.h"
 
-#define JJFS_MAX_CONF_ELEM_LEN 64
-#define JJFS_SCRATCH_SIZE 2096
+#define JJFS_MAX_CONF_ELEM_LEN 128
+
 
 #ifndef JJFS_DEFAULT_CONF_FILE
 #define JJFS_DEFAULT_CONF_FILE "~/.jjfs/jjfs.conf"
@@ -52,7 +52,7 @@ JJFS_STR_VAR(server);
 JJFS_STR_VAR(user);
 JJFS_STR_VAR(top_dir);
 JJFS_STR_VAR(sshconfig);
-JJFS_STR_VAR(mountp);
+JJFS_STR_VAR(mountpoint);
 JJFS_STR_VAR(cache_file);
 JJFS_STR_VAR(staging_dir);
 
@@ -116,24 +116,24 @@ int jjfs_prefetch_bytes() {
     } while(0)    
 
 
-static void jjfs_tilde_expand(const char *path) {
-  if (!(path != NULL && strnlen(path, 3) > 1 &&
-        path[0] == '~' && path[1] == '/')) return;
+static void jjfs_tilde_expand(const char **path) {
+  if (!(*path != NULL && strnlen(*path, 3) > 1 &&
+        (*path)[0] == '~' && (*path)[1] == '/')) return;
   char *homedir = getenv("HOME");
   if (!homedir) JJFS_DIE("Can't expand '~', $HOME not set\n");  
   char *scratch = (char*)calloc(JJFS_SCRATCH_SIZE, 1);
 #ifdef __OpenBSD__
   strlcpy(scratch, homedir, JJFS_MAX_CONF_ELEM_LEN);
-  strlcat(scratch, path, JJFS_MAX_CONF_ELEM_LEN);
+  strlcat(scratch, *path + 1, JJFS_MAX_CONF_ELEM_LEN);
 #else
   strcpy(scratch, homedir);
-  strcat(scratch, path);
+  strcat(scratch, *path + 1);
 #endif
-  free((void*)path);
-  path = scratch;
+  free((void*)(*path));
+  *path = scratch;
 }
 
-void jjfs_read_conf(const char *conf_file, const char *mountpoint) {
+void jjfs_read_conf(const char *conf_file, const char *mountp) {
 
   config_t cfg;
 
@@ -149,14 +149,14 @@ void jjfs_read_conf(const char *conf_file, const char *mountpoint) {
   }
 
   /* These must be set */
-  JJFS_READ_STR_OR_DIE(mountpoint, server);
-  JJFS_READ_STR_OR_DIE(mountpoint, top_dir);
+  JJFS_READ_STR_OR_DIE(mountp, server);
+  JJFS_READ_STR_OR_DIE(mountp, top_dir);
 
   /* Per mountpoint options */
-  JJFS_READ_INT_OR_DEFAULT(mountpoint, port, 22);
-  JJFS_READ_STR_OR_DEFAULT(mountpoint, user, NULL);
-  JJFS_READ_STR_OR_DEFAULT(mountpoint, mountp, NULL);
-  JJFS_READ_STR_OR_DEFAULT(mountpoint, cache_file, NULL);
+  JJFS_READ_INT_OR_DEFAULT(mountp, port, 22);
+  JJFS_READ_STR_OR_DEFAULT(mountp, user, NULL);
+  JJFS_READ_STR_OR_DEFAULT(mountp, mountpoint, NULL);
+  JJFS_READ_STR_OR_DEFAULT(mountp, cache_file, NULL);
 
   /* Global options */
   JJFS_READ_INT_OR_DEFAULT("", prefetch_bytes, JJFS_DEFAULT_PREFETCH_SIZE);  
@@ -172,35 +172,34 @@ void jjfs_read_conf(const char *conf_file, const char *mountpoint) {
 #ifdef __OpenBSD__
     strlcpy(scratch, "~", 1);
     strlcat(scratch, JJFS_DIR, sizeof(JJFS_DIR));
-    strlcat(scratch, mountpoint, JJFS_MAX_CONF_ELEM_LEN);
+    strlcat(scratch, mountp, JJFS_MAX_CONF_ELEM_LEN);
     strlcat(scratch, JJFS_CACHE_SUFFIX, sizeof(JJFS_CACHE_SUFFIX));
 #else
     strcpy(scratch, "~");
     strncat(scratch, JJFS_DIR, sizeof(JJFS_DIR));
-    strncat(scratch, mountpoint, JJFS_MAX_CONF_ELEM_LEN);
+    strncat(scratch, mountp, JJFS_MAX_CONF_ELEM_LEN);
     strncat(scratch, JJFS_CACHE_SUFFIX, sizeof(JJFS_CACHE_SUFFIX));
 #endif
     free((void*)cache_file);
     cache_file = scratch;
   }
 
-  if (mountp == NULL) {
+  if (mountpoint == NULL) {
     /* Construct default mountp path */
     char *scratch = (char*)calloc(JJFS_SCRATCH_SIZE, 1);
 #ifdef __OpenBSD__
     strlcpy(scratch, "~/",2);
-    strlcat(scratch, mountpoint, JJFS_MAX_CONF_ELEM_LEN);
+    strlcat(scratch, mountp, JJFS_MAX_CONF_ELEM_LEN);
 #else
     strcpy(scratch, "~/");
-    strncat(scratch, mountpoint, JJFS_MAX_CONF_ELEM_LEN);
+    strncat(scratch, mountp, JJFS_MAX_CONF_ELEM_LEN);
 #endif
-    free((void*)mountp);
-    mountp = scratch;
+    free((void*)mountpoint);
+    mountpoint = scratch;
   }
 
   /* Expand all '~/' to '$HOME/' */
-
-  jjfs_tilde_expand(mountp);
-  jjfs_tilde_expand(staging_dir);  
-  jjfs_tilde_expand(cache_file);
+  jjfs_tilde_expand(&mountpoint);
+  jjfs_tilde_expand(&staging_dir);  
+  jjfs_tilde_expand(&cache_file);
 }

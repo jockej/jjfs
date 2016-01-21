@@ -22,6 +22,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/* Size used for various allocations of strings */
+#define JJFS_SCRATCH_SIZE 2048
+
+#ifdef DEBUG
+#define JJFS_DEBUG_PRINT(...) \
+  fprintf(stderr, ##__VA_ARGS__)
+#else
+#define JJFS_DEBUG_PRINT(...)
+#endif
+
 #define JJFS_DIE_LINO_FILE(lino, file, ...)                     \
   do {                                                                  \
     if (errno) fprintf(stderr, "%s, %d: %s\n", file, lino, strerror(errno)); \

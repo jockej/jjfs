@@ -3,7 +3,7 @@ JjfsCache DEFINITIONS ::= BEGIN
 -- A file
 JjfsFile ::= SEQUENCE {
     -- name of the file
-    name PrintableString,
+    name UTF8String,
     -- size in bytes
     size INTEGER
 }
@@ -11,7 +11,8 @@ JjfsFile ::= SEQUENCE {
 -- A directory
 JjfsDir ::= SEQUENCE {
     -- name of this directory
-    name PrintableString,
+    name UTF8String,
+    size INTEGER,
     -- files in this directory
     files SEQUENCE OF JjfsFile,
     -- subdirectories of this directory

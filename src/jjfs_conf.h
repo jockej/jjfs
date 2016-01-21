@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-void jjfs_read_conf(const char *conf_file, const char *mountpoint);
+void jjfs_read_conf(const char *conf_file, const char *mountp);
 
 const char *jjfs_get_server();
 
@@ -27,3 +27,7 @@ const char *jjfs_get_sshconfig();
 const char *jjfs_get_cache_file();
 
 const int * const jjfs_get_port();
+
+const char *jjfs_get_mountpoint();
+
+const char *jjfs_get_staging_dir();

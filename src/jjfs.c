@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include "jjfs_conf.h"
+#include "jjfs_misc.h"
 #include "jjfs_sftp.h"
 #include "jjfs_cache.h"
 
@@ -36,10 +37,14 @@ int main(int argc, char **argv) {
   jjfs_read_conf(full_cf, mp);
 
   free(full_cf);
-  
-  printf("Server: %s\n", jjfs_get_server());
-  printf("Port: %d\n", *jjfs_get_port());
-  printf("Top_dir %s\n", jjfs_get_top_dir());
+
+  JJFS_DEBUG_PRINT("Server: %s\n", jjfs_get_server());
+  JJFS_DEBUG_PRINT("Port: %d\n", *jjfs_get_port());
+  JJFS_DEBUG_PRINT("Top_dir: %s\n", jjfs_get_top_dir());
+  JJFS_DEBUG_PRINT("Cache file: %s\n", jjfs_get_cache_file());
+  JJFS_DEBUG_PRINT("Mountpoint: %s\n", jjfs_get_mountpoint());
+  JJFS_DEBUG_PRINT("User: %s\n", jjfs_get_user());
+  JJFS_DEBUG_PRINT("Staging dir: %s\n", jjfs_get_staging_dir());  
 
   jjfs_cache_rebuild();
   

@@ -6,14 +6,14 @@ ASN_MODULE_HEADERS=	\
 	JjfsFile.h	\
 	JjfsDir.h
 
+ASN_MODULE_HEADERS+=UTF8String.h
 ASN_MODULE_HEADERS+=INTEGER.h
 ASN_MODULE_HEADERS+=NativeEnumerated.h
 ASN_MODULE_SOURCES+=INTEGER.c
 ASN_MODULE_SOURCES+=NativeEnumerated.c
 ASN_MODULE_HEADERS+=NativeInteger.h
 ASN_MODULE_SOURCES+=NativeInteger.c
-ASN_MODULE_HEADERS+=PrintableString.h
-ASN_MODULE_SOURCES+=PrintableString.c
+ASN_MODULE_SOURCES+=UTF8String.c
 ASN_MODULE_HEADERS+=asn_SEQUENCE_OF.h
 ASN_MODULE_SOURCES+=asn_SEQUENCE_OF.c
 ASN_MODULE_HEADERS+=asn_SET_OF.h
@@ -61,35 +61,8 @@ ASN_MODULE_SOURCES+=per_encoder.c
 ASN_MODULE_HEADERS+=per_opentype.h
 ASN_MODULE_SOURCES+=per_opentype.c
 ASN_CONVERTER_SOURCES+=converter-sample.c
-ASN_CONVERTER_SOURCES+=pdu_collection.c
 
 
-lib_LTLIBRARIES=libsomething.la
-libsomething_la_SOURCES=$(ASN_MODULE_SOURCES) $(ASN_MODULE_HEADERS)
-
-# This file may be used as an input for make(3)
-# Remove the lines below to convert it into a pure .am file
-TARGET = progname
-CFLAGS += -DASN_PDU_COLLECTION -I.
-OBJS=${ASN_MODULE_SOURCES:.c=.o} ${ASN_CONVERTER_SOURCES:.c=.o}
-
-all: $(TARGET)
-
-$(TARGET): ${OBJS}
-	$(CC) $(CFLAGS) -o $(TARGET) ${OBJS} $(LDFLAGS) $(LIBS)
-
-.SUFFIXES:
-.SUFFIXES: .c .o
-
-.c.o:
-	$(CC) $(CFLAGS) -o $@ -c $<
-
-clean:
-	rm -f $(TARGET)
-	rm -f $(OBJS)
-
-regen: regenerate-from-asn1-source
-
-regenerate-from-asn1-source:
-	/usr/bin/asn1c -pdu=auto jjfs_cache.asn1
-
+lib_LTLIBRARIES=libjjfsasn1.la
+libjjfsasn1_la_SOURCES=$(ASN_MODULE_SOURCES) $(ASN_MODULE_HEADERS)
+libjjfsasn1_DEPENDENCIES = ../jjfs_cache.asn1
