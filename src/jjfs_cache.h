@@ -24,6 +24,7 @@ typedef struct jjfs_cache_file {
 
 typedef struct jjfs_cache_dir {
   const char *name;
+  const size_t size;
   const jjfs_cache_file *files;
   const jjfs_cache_dir *next, *subdirs;
 } jjfs_cache_dir;

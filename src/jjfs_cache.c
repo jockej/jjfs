@@ -49,13 +49,64 @@ static void jjfs_cache_decode() {
 }
 #endif
 
-static int jjfs_read_dir(sftp_session sftp, sftp_dir dir) {
+#define LEVEL_PADDING(lvl) \
+  do {                     \
+    unsigned i;                                         \
+    for (i = 0; i < (lvl); i++) fprintf(stderr, "  ");  \
+  } while(0)
+
+static void jjfs_cache_debug_print_dir(unsigned level, jjfs_cache_dir *dir) {
+  LEVEL_PADDING(level);
+  fprintf(stderr, "%s, %lu\n", dir->name, dir->size);
+  jjfs_cache_file *f = dir->files;
+  while (f) {
+    LEVEL_PADDING(level + 1);
+    fprintf(stderr, "%s, %lu\n", f->name, f->size);
+    f = f->next;
+  }
+  jjfs_cache_dir *d = dir->subdirs;
+  while (d) {
+    jjfs_cache_debug_print_dir(level + 1, d);
+    d = d->next;
+  }
+}
+
+static void jjfs_cache_debug_print() {
+
+}
+
+static int jjfs_recurse_dir(sftp_session sftp, sftp_dir dir,
+                            const char *path, jjfs_cache_dir *parent) {
+  
   sftp_attributes attr;
-  do {
-    attr = sftp_readdir(sftp, dir);
-    if (attr->type == SSH_FILEXFER_TYPE_DIRECTORY)
-      printf("Trying to open %s as dir\n", attr->name);
-  } while(attr);
+  while (attr = sftp_readdir(sftp, dir)) {
+    if (attr->type == SSH_FILEXFER_TYPE_DIRECTORY) {
+      jjfs_cache_dir *d = (jjfs_cache_dir*)malloc(sizeof(jjfs_cache_dir));
+      d->name = strdup(attr->name);
+      d->size = attr->size;
+      d->next = parent->subdirs;
+      parent->subdirs = d;
+
+      const char *subpath = malloc(
+#ifdef __OpenBSD__
+
+#else
+
+#endif
+      
+      sftp_dir subdir = sftp_opendir(sftp, 
+      jjfs_recurse_dir(sftp, 
+      
+    } else if (attr->type SSH_FILEXFER_TYPE_FILE) {
+      jjfs_cache_file *f = (jjfs_cache_file*)malloc(sizeof(jjfs_cache_file));
+      f->name = strdup(attr->name);
+      f->size = attr->size;
+      f->next = parent->files;
+      parent->files = f;
+    }
+  }
+
+  if (!sftp_dir_eof()) return -1;
 
   sftp_attributes_free(attr);
   return 0;
