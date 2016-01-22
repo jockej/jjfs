@@ -32,14 +32,15 @@
 #define JJFS_DEBUG_PRINT(...)
 #endif
 
-#define JJFS_DIE_LINO_FILE(lino, file, ...)                     \
+#define JJFS_DIE_LINO_FILE(lino, file, uncond, ...)                     \
   do {                                                                  \
     if (errno) fprintf(stderr, "%s, %d: %s\n", file, lino, strerror(errno)); \
-    fprintf(stderr, ##__VA_ARGS__);                             \
+    else if (uncond) fprintf(stderr, "%s, %d: ", file, lino);           \
+    fprintf(stderr, ##__VA_ARGS__);                                     \
     exit(EXIT_FAILURE);                                                 \
   } while(0)
 
 #define JJFS_DIE(...) \
-  JJFS_DIE_LINO_FILE(__LINE__, __FILE__,  __VA_ARGS__)
+  JJFS_DIE_LINO_FILE(__LINE__, __FILE__, 0,  __VA_ARGS__)
 
 #endif /* ifndef JJFS_MISC_H */
