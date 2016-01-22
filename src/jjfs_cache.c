@@ -163,7 +163,7 @@ static int jjfs_build_cache(sftp_session sftp, const char *path,
       strcat(subpath, "/");
       strncat(subpath, attr->name, JJFS_SCRATCH_SIZE);
 #endif
-      if (jjfs_recurse_dir(sftp, subpath, d) == -1) return -1;
+      if (jjfs_build_cache(sftp, subpath, d) == -1) return -1;
       free(subpath);
     } else if (attr->type == SSH_FILEXFER_TYPE_REGULAR) {
       jjfs_cache_file *f = (jjfs_cache_file*)calloc(1, sizeof(jjfs_cache_file));
@@ -210,14 +210,14 @@ int jjfs_cache_init() {
 
 void jjfs_cache_free_dir(jjfs_cache_dir *dir) {
   // First free the files
-  jjfs_cache_file f = dir->files;
+  jjfs_cache_file *f = dir->files;
   while(f) {
     jjfs_cache_file *tmp = f;
     f = f->next;
     free(tmp);
   }
 
-  jjfs_cache_dir d = dir->subdirs;
+  jjfs_cache_dir *d = dir->subdirs;
   while(d) {
     jjfs_cache_free_dir(d);
     jjfs_cache_dir *tmp = d;

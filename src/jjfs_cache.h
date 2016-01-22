@@ -22,7 +22,7 @@
 typedef struct jjfs_cache_file {
   const char * name;
   size_t size;
-  jjfs_cache_file *next;
+  struct jjfs_cache_file *next;
 } jjfs_cache_file;
 
 /**
@@ -31,8 +31,8 @@ typedef struct jjfs_cache_file {
 typedef struct jjfs_cache_dir {
   const char *name;
   size_t size;
-  jjfs_cache_file *files;
-  jjfs_cache_dir *next, *subdirs;
+  struct jjfs_cache_file *files;
+  struct jjfs_cache_dir *next, *subdirs;
 } jjfs_cache_dir;
 
 /**

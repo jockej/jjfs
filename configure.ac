@@ -2,13 +2,20 @@
 
 AC_PREREQ([2.69])
 AC_INIT([jjfs], [0.1], [joakim.jalap@fastmail.com])
-AM_INIT_AUTOMAKE([jjfs], [0.1])
+AM_INIT_AUTOMAKE([-Wall foreign])
 
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADERS([config.h])
 
+AC_CONFIG_FILES([Makefile
+                 src/Makefile
+                 src/asn1/Makefile
+                 doc/Makefile])
+
 # Checks for programs.
 AC_PROG_CC
+AM_PROG_AR
+AC_PROG_LIBTOOL
 
 # Checks for libraries.
 AC_SEARCH_LIBS([config_init], [config], [],
