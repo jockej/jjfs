@@ -12,6 +12,8 @@ AC_CONFIG_FILES([Makefile
                  src/asn1/Makefile
                  doc/Makefile])
 
+AC_CONFIG_MACRO_DIR([m4])
+
 # Checks for programs.
 AC_PROG_CC
 AM_PROG_AR
