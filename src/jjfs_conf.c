@@ -185,7 +185,7 @@ void jjfs_read_conf(const char *conf_file, const char *mountp) {
   }
 
   if (mountpoint == NULL) {
-    /* Construct default mountp path */
+    /* Construct default mountpoint path */
     char *scratch = (char*)calloc(JJFS_SCRATCH_SIZE, 1);
 #ifdef __OpenBSD__
     strlcpy(scratch, "~/",2);
@@ -202,4 +202,14 @@ void jjfs_read_conf(const char *conf_file, const char *mountp) {
   jjfs_tilde_expand(&mountpoint);
   jjfs_tilde_expand(&staging_dir);  
   jjfs_tilde_expand(&cache_file);
+}
+
+void jjfs_conf_free() {
+  free((void*)server);
+  free((void*)user);
+  free((void*)mountpoint);
+  free((void*)cache_file);
+  free((void*)staging_dir);
+  free((void*)top_dir);
+  free((void*)sshconfig);              
 }

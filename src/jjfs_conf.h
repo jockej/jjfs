@@ -14,7 +14,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+/**
+ * Read the config from conf_file.
+ *
+ * @param conf_file Path to the config file.
+ * @param mountp The mountpoint to read config for.
+ */
 void jjfs_read_conf(const char *conf_file, const char *mountp);
+
+/**
+ * Free the config memory.
+ */
+void jjfs_conf_free();
 
 const char *jjfs_get_server();
 

@@ -15,6 +15,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * This file implements the caching functionality.
+ */
+
 #include "jjfs_cache.h"
 #include "jjfs_conf.h"
 #include "jjfs_sftp.h"
@@ -22,9 +26,14 @@
 #include "asn1/JjfsDir.h"
 #include "asn1/JjfsFile.h"
 
+/**
+ * Memory for the result of `jjfs_cache_lookup_path'.
+ */
 jjfs_cache_entry ret;
 
-/* Top of cache */
+/**
+ * Top of cache.
+ */
 jjfs_cache_dir top;
 
 #ifdef JJFS_CACHE_XML
@@ -37,6 +46,9 @@ static void jjfs_cache_encode_ber() {
 }
 #endif
 
+/**
+ * Builds the asn1 structure from `dir' down.
+ */
 static int jjfs_cache_write_dir(jjfs_cache_dir *dir, JjfsDir_t *asn_dir) {
   UTF8String_t dname;
   OCTET_STRING_fromString(&dname, dir->name);
@@ -66,7 +78,11 @@ static int jjfs_cache_write_dir(jjfs_cache_dir *dir, JjfsDir_t *asn_dir) {
 }
 
 
-
+/**
+ * Write the cache to file.
+ *
+ * @return 0 on success, -1 otherwise.
+ */
 static int jjfs_cache_write() {
   JjfsDir_t *asn_dir;
   asn_dir = (JjfsDir_t*)calloc(1, sizeof(JjfsDir_t));
@@ -114,7 +130,17 @@ static inline void jjfs_cache_debug_print() {
 }
 #endif
 
-static int jjfs_recurse_dir(sftp_session sftp, const char *path,
+/**
+ * Recurse the directory represented by path and parent, building the cache
+ * structure.
+ *
+ * @param sftp An sftp session, must be connected.
+ * @param path The path to start traversal in.
+ * @param parent Parent of this directory.
+ *
+ * @return 0 on success, -1 otherwise.
+ */
+static int jjfs_build_cache(sftp_session sftp, const char *path,
                             jjfs_cache_dir *parent) {
   
   sftp_dir dir = sftp_opendir(sftp, path);  
@@ -155,18 +181,18 @@ static int jjfs_recurse_dir(sftp_session sftp, const char *path,
 }
 
 int jjfs_cache_rebuild() {
-  const char *cache_file = jjfs_get_cache_file();
   const char *topdir = jjfs_get_top_dir();
   top.name = topdir;
   top.size = 11;
   jjfs_conn();
-  jjfs_recurse_dir(jjfs_sftp(), topdir, &top);
+  jjfs_build_cache(jjfs_sftp(), topdir, &top);
   jjfs_disconn();
 
 #ifdef DEBUG
   jjfs_cache_debug_print();
 #endif
-  
+
+  jjfs_cache_write();
   return 0;
 }
 
@@ -182,8 +208,26 @@ int jjfs_cache_init() {
   return 0;
 }
 
-void jjfs_cache_free() {
+void jjfs_cache_free_dir(jjfs_cache_dir *dir) {
+  // First free the files
+  jjfs_cache_file f = dir->files;
+  while(f) {
+    jjfs_cache_file *tmp = f;
+    f = f->next;
+    free(tmp);
+  }
 
+  jjfs_cache_dir d = dir->subdirs;
+  while(d) {
+    jjfs_cache_free_dir(d);
+    jjfs_cache_dir *tmp = d;
+    d = d->next;
+    free(tmp);
+  }
+}
+
+void jjfs_cache_free() {
+  jjfs_cache_free_dir(&top);
 }
 
 jjfs_cache_entry *jjfs_cache_lookup_path(const char *path) {
