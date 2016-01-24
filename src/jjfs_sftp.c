@@ -76,7 +76,7 @@ int jjfs_conn() {
 
 int jjfs_disconn() {
   ssh_disconnect(ssh);
-  ssh_free(ssh);
-  sftp_free(sftp);
+  //sftp_free(sftp);
+  //ssh_free(ssh);
   return 0;
 }

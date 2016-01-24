@@ -49,18 +49,20 @@ static void jjfs_cache_encode_ber() {
 /**
  * Builds the asn1 structure from `dir' down.
  */
-static int jjfs_cache_write_dir(jjfs_cache_dir *dir, JjfsDir_t *asn_dir) {
-  UTF8String_t dname;
-  OCTET_STRING_fromString(&dname, dir->name);
-  asn_dir->name = dname;
+static int jjfs_cache_build_asn(jjfs_cache_dir *dir, JjfsDir_t *asn_dir) {
+  UTF8String_t *dname = OCTET_STRING_new_fromBuf(&asn_DEF_UTF8String,
+                                                 dir->name,
+                                                 strlen(dir->name) + 1);
+  asn_dir->name = *dname;
   asn_dir->size = dir->size;
   
   jjfs_cache_file *f = dir->files;
   while (f) {
     JjfsFile_t *asn_f = (JjfsFile_t*)calloc(1, sizeof(JjfsFile_t));
-    UTF8String_t fname;
-    OCTET_STRING_fromString(&fname, f->name);
-    asn_f->name = fname;
+    UTF8String_t *fname = OCTET_STRING_new_fromBuf(&asn_DEF_UTF8String,
+                                                   f->name,
+                                                   strlen(f->name) + 1);
+    asn_f->name = *fname;
     asn_f->size = f->size;
     ASN_SEQUENCE_ADD(&asn_dir->files, asn_f);
     f = f->next;
@@ -69,8 +71,8 @@ static int jjfs_cache_write_dir(jjfs_cache_dir *dir, JjfsDir_t *asn_dir) {
   jjfs_cache_dir *d = dir->subdirs;
   while (d) {
     JjfsDir_t *asn_d = (JjfsDir_t*)calloc(1, sizeof(JjfsDir_t));
-    jjfs_cache_write_dir(d, asn_d);
-    ASN_SEQUENCE_ADD(&asn_d->subdirs, asn_d);
+    jjfs_cache_build_asn(d, asn_d);
+    ASN_SEQUENCE_ADD(&asn_dir->subdirs, asn_d);
     d = d->next;
   }
 
@@ -84,11 +86,10 @@ static int jjfs_cache_write_dir(jjfs_cache_dir *dir, JjfsDir_t *asn_dir) {
  * @return 0 on success, -1 otherwise.
  */
 static int jjfs_cache_write() {
-  JjfsDir_t *asn_dir;
-  asn_dir = (JjfsDir_t*)calloc(1, sizeof(JjfsDir_t));
+  JjfsDir_t *asn_dir = (JjfsDir_t*)calloc(1, sizeof(JjfsDir_t));
+  jjfs_cache_build_asn(&top, asn_dir);
   xer_fprint(stdout, &asn_DEF_JjfsDir, asn_dir);
   asn_DEF_JjfsDir.free_struct(&asn_DEF_JjfsDir, asn_dir, 0);
-
   return 0;
 }
 
@@ -156,7 +157,7 @@ static int jjfs_build_cache(sftp_session sftp, const char *path,
       char *subpath = (char*)malloc(JJFS_SCRATCH_SIZE);
 #ifdef __OpenBSD__
       strlcpy(subpath, path, JJFS_SCRATCH_SIZE);
-      strlcat(subpath, "/", 2);
+      strlcat(subpath, "/", JJFS_SCRATCH_SIZE);
       strlcat(subpath, attr->name, JJFS_SCRATCH_SIZE);
 #else
       strncpy(subpath, path, JJFS_SCRATCH_SIZE);
