@@ -1,1 +1,81 @@
 .TH JJFS 1
+
+.TH PWLD 1
+.SH NAME
+jjfs \- Joakim Jalap's file system
+.SH SYNOPSIS
+.B jjfs
+mountpoint
+.BR
+.B jjfs
+
+.SH DESCRIPTION
+Jjfs is a fuse filesystem meant for a specific use case. It is meant to mount a
+remote filesystem over sftp (a but like sshfs(1)) but to minimize disk activity
+on the remote system. Therefore a cache is kept on the local system and
+consulted for stats. When reading of a file is requested this file is
+transferred over sftp to a staging directory on the local machine and then read
+from there. 
+.SH OPTIONS
+.TP
+.BR \-v, \-\-version
+Print version and exit.
+.TP
+.BR \-s, \-\-server \fIserver\fR
+Server to connect to.
+.TP
+.BR \-p, \-\-port \fIport\fR
+Port to connect to.
+.TP
+.BR \-u,\-\-user \fIuser\fR
+User to connect as.
+.TP
+.BR \-f,\-\-cache-file \fIcache-file\fR
+The file to store the cache in. Default is \fI~/.jjfs/<name-of-mountpoint>-cache\fR.
+.BR
+\-c, \-\-conf-file \fIconfiguration file.\fR
+File to read configuration from. Default is ~/.jjfs.conf. For a description of
+the format, see section FILES.
+.BR
+\-t, \-\-staging-dir \fIstaging directory\fR
+Directory where fetched files are stored. This directory must have sufficient
+space available to store any file opened.
+.BR
+\-m, \-\-mount-on \fIwhere-to-mount\fR
+Where to mount the system.
+.SH FILES
+.TP
+.BR Configuration file.
+jjfs will attempt to read its configuration parameters from a configuration
+file. If no \-c argument is given, the default location is ~/.jjfs.conf. This
+file consists of a few global options and then \fImountpoint-blocks\fR.
+.SH BUGS
+Tis program surely leaks memory, but its memory use should be modest enough that
+it doesn't really matter.
+.SH EXAMPLE
+.TP
+To use the values set for mountpoint 'my-server' in ~/.jjfs.conf
+.sp 1
+jjfs my-server
+.sp
+.TP
+Same as above but on a different port.
+.sp 1
+jjfs --port=50000 my-server
+.sp
+.TP
+
+.sp 1
+
+.sp
+.SH SEE ALSO
+.BR jjfs-rebuild(1)
+.SH AUTHOR
+This man page was written by Joakim Jalap (joakim.jalap@fastmail.com).
+
+
+
+
+
+
+
