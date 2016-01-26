@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <libconfig.h>
 #include "jjfs_conf.h"
@@ -39,6 +40,21 @@
 #define JJFS_DIR "/.jjfs/"
 #endif
 
+enum jjfs_conf_cmdl_args = {
+  server_idx,
+  port_idx,
+  user_idx,
+  cache_file_idx,
+  staging_dir_idx,
+  top_dir_idx,
+  sshconfig_idx,
+  /* Must be last */
+  jjfs_conf_cmdl_args_last
+};
+
+static char **cmdl_args;
+
+static const char *mountp;
 
 static int port, prefetch_bytes;
 
@@ -88,33 +104,48 @@ int jjfs_prefetch_bytes() {
 
 #define JJFS_READ_STR_OR_DIE_LINO(lino, mp, var)                        \
   do {                                                                  \
-    JJFS_PATH(mp, var)                                                  \
-      const char *tmp_##var;                                            \
-    if (config_lookup_string(&cfg, path, &tmp_##var) != CONFIG_TRUE) {  \
-      JJFS_DIE_LINO_FILE(lino, __FILE__, 1, "Could not read var \"%s\"\n", path); \
+    char *c;                                                            \
+    if (c = cmdl_args[var##_idx]) {                                     \
+      var = strdup(c);                                                  \
     } else {                                                            \
-      var = strdup(tmp_##var);                                          \
+      JJFS_PATH(mp, var);                                               \
+      const char *tmp_##var;                                            \
+      if (config_lookup_string(&cfg, path, &tmp_##var) != CONFIG_TRUE) { \
+        JJFS_DIE_LINO_FILE(lino, __FILE__, 1,                           \
+                           "Could not read var \"%s\"\n", path);        \
+      } else {                                                          \
+        var = strdup(tmp_##var);                                        \
+      }                                                                 \
     }                                                                   \
   } while(0)
 
 #define JJFS_READ_STR_OR_DIE(mp, var)           \
   JJFS_READ_STR_OR_DIE_LINO(__LINE__, mp, var)
 
-#define JJFS_READ_STR_OR_DEFAULT(mp, var, dflt)                        \
-  do {                                                                 \
-    JJFS_PATH(mp, var)                                                 \
-    const char *tmp_##var = dflt;                                      \
-    config_lookup_string(&cfg, path, &tmp_##var);                      \
-    var = tmp_##var ? strdup(tmp_##var) : NULL;                        \
+#define JJFS_READ_STR_OR_DEFAULT(mp, var, dflt)                         \
+  do {                                                                  \
+    char *c;                                                            \
+    if (c = cmdl_args[var##_idx]) {                                     \
+      var = strdup(c);                                                  \
+    } else {                                                            \
+      JJFS_PATH(mp, var);                                               \
+      const char *tmp_##var = dflt;                                     \
+      config_lookup_string(&cfg, path, &tmp_##var);                     \
+      var = tmp_##var ? strdup(tmp_##var) : NULL;                       \
+    }                                                                   \
   } while(0)
 
 #define JJFS_READ_INT_OR_DEFAULT(mp, var, dflt)                         \
     do {                                                                \
-      JJFS_PATH(mp, var)                                                \
+      char *c;                                                          \
+      if (c = cmdl_args[var##_idx]) {                                   \
+        var = strtol(c);                                                \
+      } else {                                                          \
+        JJFS_PATH(mp, var);                                             \
         var = dflt;                                                     \
-      config_lookup_int(&cfg, path, &var);                              \
+        config_lookup_int(&cfg, path, &var);                            \
+      }                                                                 \
     } while(0)    
-
 
 static void jjfs_tilde_expand(const char **path) {
   if (!(*path != NULL && strnlen(*path, 3) > 1 &&
@@ -133,11 +164,71 @@ static void jjfs_tilde_expand(const char **path) {
   *path = scratch;
 }
 
-void jjfs_read_conf(const char *conf_file, const char *mountp) {
+#ifdef JJFS_REBUILD
+static int jjfs_parse_cmdl(int argc, char **argv) {
+  /* everything is NULL here. */
+  cmdl_args = calloc(jjfs_conf_cmdl_args_last, sizeof(char*));
+  
+  
+}
+#else
+static struct option longopts[] = {
+  {"version", no_argument, NULL, "v"},
+  {"server", reuired_argument, NULL, "s"},
+  {"port", required_argument, NULL, "p"},
+  {"user", required_argument, NULL, "u"},
+  {"cache-file", required_argument, NULL, "f"},
+  {"conf-file", required_argument, NULL, "c"},
+  {"staging-dir", required_argument, NULL, "t"},
+  {"mount-on", required_argument, NULL, "m"},
+  {"help", no_argument, NULL, "h"},
+  {NULL, 0, NULL, 0}
+};
+
+#define JJFS_OPTCASE(optchar, var)    \
+  case optchar:                       \
+  cmdl_args[var##_idx] = optarg;      \
+  break;                              \
+
+#define JJFS_OPTSTR "vs:p:u:f:c:t:m:"
+
+static int jjfs_parse_cmdl(int argc, char **argv) {
+  char ch;
+  cmdl_args = (char**) calloc(jjfs_conf_cmdl_args_last, sizeof(char*));
+  
+  while((ch = getopt_long(argc, argv, JJFS_OPTSTR, longopts, NULL)) != -1) {
+    switch(ch) {
+    case 'v':
+      
+      exit(EXIT_SUCCESS);
+      
+      JJFS_OPTCASE('s', server);
+      JJFS_OPTCASE('p', port);
+      JJFS_OPTCASE('u', user);
+      JJFS_OPTCASE('f', cache_file);
+      JJFS_OPTCASE('c', conf_file);
+      JJFS_OPTCASE('t', staging_dir);
+      JJFS_OPTCASE('m', mountpoint);
+      
+    default: echo_usage();
+    }
+  }
+  
+  /* Get the mountpoint if any */
+
+}
+
+#define IF_NOT_NULL_ELSE(thing, ifnull) \
+  (thing != NULL ? thing : ifnull)
+
+void jjfs_read_conf(int argc, char **argv) {
 
   config_t cfg;
 
-  const char *cf = conf_file != NULL ? conf_file : JJFS_DEFAULT_CONF_FILE;
+  jjfs_parse_cmdl(argc, argv);
+  
+  const char *cf = IF_NOT_NULL_ELSE(cmdl_args[conf_file_idx],
+                                    JJFS_DEFAULT_CONF_FILE);
 
   config_init(&cfg);
 
@@ -202,6 +293,7 @@ void jjfs_read_conf(const char *conf_file, const char *mountp) {
   jjfs_tilde_expand(&mountpoint);
   jjfs_tilde_expand(&staging_dir);  
   jjfs_tilde_expand(&cache_file);
+  jjfs_tilde_expand(&sshconfig);
 }
 
 void jjfs_conf_free() {

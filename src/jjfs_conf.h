@@ -15,13 +15,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+
 /**
  * Read the config from conf_file.
  *
  * @param conf_file Path to the config file.
  * @param mountp The mountpoint to read config for.
+ * @param cmdl_args An array of strings containing the command line arguments.
  */
-void jjfs_read_conf(const char *conf_file, const char *mountp);
+void jjfs_read_conf(const char *conf_file, const char *mountp,
+                    char **cmdl_args);
 
 /**
  * Free the config memory.

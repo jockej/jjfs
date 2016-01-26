@@ -17,6 +17,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <getopt.h>
+#include "config.h"
 #include "jjfs_conf.h"
 #include "jjfs_misc.h"
 #include "jjfs_sftp.h"
@@ -25,12 +27,11 @@
 
 int main(int argc, char **argv) {
 
-  const char *cf = argv[1];
 
-  const char *mp = argv[2];
+  char **args = parse_opts(argc, argv);
 
-  printf("Conf file: %s, mountpoint: %s\n", cf, mp);
-
+  
+  
   char *full_cf = realpath(cf, NULL);
   printf("Full path of conf file: %s\n", full_cf);
   
