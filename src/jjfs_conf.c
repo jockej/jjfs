@@ -23,6 +23,9 @@
 
 #define JJFS_MAX_CONF_ELEM_LEN 128
 
+#ifndef JJFS_DEFAULT_PORT
+#define JJFS_DEFAULT_PORT 22
+#endif
 
 #ifndef JJFS_DEFAULT_CONF_FILE
 #define JJFS_DEFAULT_CONF_FILE "~/.jjfs/jjfs.conf"
@@ -54,6 +57,8 @@ enum jjfs_conf_cmdl_args = {
 
 static char **cmdl_args;
 
+static int rebuild = 0;
+
 static const char *mountp;
 
 static int port, prefetch_bytes;
@@ -80,6 +85,11 @@ int jjfs_prefetch_bytes() {
   return prefetch_bytes;
 }
 
+int jjfs_is_rebuild() {
+  return rebuild;
+}
+
+/* Construct the libconfig path */
 #ifdef __OpenBSD__
 #define JJFS_PATH(mp, var)                              \
   char path[JJFS_SCRATCH_SIZE] = {0};                   \
@@ -127,7 +137,7 @@ int jjfs_prefetch_bytes() {
     char *c;                                                            \
     if (c = cmdl_args[var##_idx]) {                                     \
       var = strdup(c);                                                  \
-    } else {                                                            \
+    } else if (mp) {                                                    \
       JJFS_PATH(mp, var);                                               \
       const char *tmp_##var = dflt;                                     \
       config_lookup_string(&cfg, path, &tmp_##var);                     \
@@ -140,7 +150,7 @@ int jjfs_prefetch_bytes() {
       char *c;                                                          \
       if (c = cmdl_args[var##_idx]) {                                   \
         var = strtol(c);                                                \
-      } else {                                                          \
+      } else if (mp) {                                                  \
         JJFS_PATH(mp, var);                                             \
         var = dflt;                                                     \
         config_lookup_int(&cfg, path, &var);                            \
@@ -164,14 +174,8 @@ static void jjfs_tilde_expand(const char **path) {
   *path = scratch;
 }
 
-#ifdef JJFS_REBUILD
-static int jjfs_parse_cmdl(int argc, char **argv) {
-  /* everything is NULL here. */
-  cmdl_args = calloc(jjfs_conf_cmdl_args_last, sizeof(char*));
-  
-  
-}
-#else
+static int optn;
+
 static struct option longopts[] = {
   {"version", no_argument, NULL, "v"},
   {"server", reuired_argument, NULL, "s"},
@@ -179,42 +183,54 @@ static struct option longopts[] = {
   {"user", required_argument, NULL, "u"},
   {"cache-file", required_argument, NULL, "f"},
   {"conf-file", required_argument, NULL, "c"},
-  {"staging-dir", required_argument, NULL, "t"},
+  {"staging-dir", required_argument, &optn, 1},
+  {"sshconfig", required_argument, &optn, 2},
   {"mount-on", required_argument, NULL, "m"},
   {"help", no_argument, NULL, "h"},
+  {"rebuild-cache", no_argument, NULL, "r"},
   {NULL, 0, NULL, 0}
 };
 
-#define JJFS_OPTCASE(optchar, var)    \
-  case optchar:                       \
+#define JJFS_OPTCASE(opt, var)        \
+  case opt:                           \
   cmdl_args[var##_idx] = optarg;      \
   break;                              \
 
-#define JJFS_OPTSTR "vs:p:u:f:c:t:m:"
+#define JJFS_OPTSTR "vs:p:u:f:c:m:rh"
 
-static int jjfs_parse_cmdl(int argc, char **argv) {
+static void jjfs_parse_cmdl(int argc, char **argv) {
   char ch;
   cmdl_args = (char**) calloc(jjfs_conf_cmdl_args_last, sizeof(char*));
   
   while((ch = getopt_long(argc, argv, JJFS_OPTSTR, longopts, NULL)) != -1) {
     switch(ch) {
     case 'v':
-      
+
       exit(EXIT_SUCCESS);
-      
+    case 'r':
+      rebuild = 1;
+      break;
+      /* Other cases */
       JJFS_OPTCASE('s', server);
       JJFS_OPTCASE('p', port);
       JJFS_OPTCASE('u', user);
       JJFS_OPTCASE('f', cache_file);
       JJFS_OPTCASE('c', conf_file);
-      JJFS_OPTCASE('t', staging_dir);
       JJFS_OPTCASE('m', mountpoint);
+      /* Options which are only long */
+    case 0:
+      switch (optn) {
+        JJFS_OPTCASE(1, staging_dir);
+        JJFS_OPTCASE(2, sshconfig);
+      }
+      break;
       
     default: echo_usage();
     }
   }
   
   /* Get the mountpoint if any */
+  mountp = argv[optind];
 
 }
 
@@ -294,6 +310,16 @@ void jjfs_read_conf(int argc, char **argv) {
   jjfs_tilde_expand(&staging_dir);  
   jjfs_tilde_expand(&cache_file);
   jjfs_tilde_expand(&sshconfig);
+
+  JJFS_DEBUG_PRINT(1, "Done parsing conf");
+  JJFS_DEBUG_PRINT(1, "Mountp: %s\n", mountp);
+  JJFS_DEBUG_PRINT(1, "Server: %s\n", jjfs_get_server());
+  JJFS_DEBUG_PRINT(1, "Port: %d\n", *jjfs_get_port());
+  JJFS_DEBUG_PRINT(1, "Top_dir: %s\n", jjfs_get_top_dir());
+  JJFS_DEBUG_PRINT(1, "Cache file: %s\n", jjfs_get_cache_file());
+  JJFS_DEBUG_PRINT(1, "Mountpoint: %s\n", jjfs_get_mountpoint());
+  JJFS_DEBUG_PRINT(1, "User: %s\n", jjfs_get_user());
+  JJFS_DEBUG_PRINT(1, "Staging dir: %s\n", jjfs_get_staging_dir()); 
 }
 
 void jjfs_conf_free() {

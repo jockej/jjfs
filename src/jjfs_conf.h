@@ -19,12 +19,8 @@
 /**
  * Read the config from conf_file.
  *
- * @param conf_file Path to the config file.
- * @param mountp The mountpoint to read config for.
- * @param cmdl_args An array of strings containing the command line arguments.
  */
-void jjfs_read_conf(const char *conf_file, const char *mountp,
-                    char **cmdl_args);
+void jjfs_read_conf(int argc, char **argv);
 
 /**
  * Free the config memory.
@@ -41,8 +37,10 @@ const char *jjfs_get_sshconfig();
 
 const char *jjfs_get_cache_file();
 
-const int * const jjfs_get_port();
+1const int * const jjfs_get_port();
 
 const char *jjfs_get_mountpoint();
 
 const char *jjfs_get_staging_dir();
+
+int jjfs_is_rebuild();

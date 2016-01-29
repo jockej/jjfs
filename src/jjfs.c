@@ -27,27 +27,21 @@
 
 int main(int argc, char **argv) {
 
+  if (argc < 2) JJFS_DIE("Too few arguments");
+  
+  jjfs_read_conf(argc, argv);
 
-  char **args = parse_opts(argc, argv);
+
+  if (jjfs_is_rebuild()) {
+    jjfs_cache_rebuild();
+    exit(EXIT_SUCCESS);
+  }
 
   
-  
-  char *full_cf = realpath(cf, NULL);
-  printf("Full path of conf file: %s\n", full_cf);
-  
-  jjfs_read_conf(full_cf, mp);
+  jjfs_cache_init();
 
-  free(full_cf);
 
-  JJFS_DEBUG_PRINT("Server: %s\n", jjfs_get_server());
-  JJFS_DEBUG_PRINT("Port: %d\n", *jjfs_get_port());
-  JJFS_DEBUG_PRINT("Top_dir: %s\n", jjfs_get_top_dir());
-  JJFS_DEBUG_PRINT("Cache file: %s\n", jjfs_get_cache_file());
-  JJFS_DEBUG_PRINT("Mountpoint: %s\n", jjfs_get_mountpoint());
-  JJFS_DEBUG_PRINT("User: %s\n", jjfs_get_user());
-  JJFS_DEBUG_PRINT("Staging dir: %s\n", jjfs_get_staging_dir());  
-
-  jjfs_cache_rebuild();
-  
+  jjfs_cache_free();
+  jjfs_conf_free();
   return 0;
 }

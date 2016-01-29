@@ -88,28 +88,38 @@ static int jjfs_cache_build_asn(jjfs_cache_dir *dir, JjfsDir_t *asn_dir) {
 static int jjfs_cache_write() {
   JjfsDir_t *asn_dir = (JjfsDir_t*)calloc(1, sizeof(JjfsDir_t));
   jjfs_cache_build_asn(&top, asn_dir);
+
+  int fd = open(jjfs_get_cache_file(), O_CREAT | O_RDWR);
+  if (fd < 0) JJFS_DIE("Couldn't open cache file\n");
+  /* Lock the file */
+  flock(fd, LOCK_EX);
+  FILE *f = fdopen(fd, "w");
+
+#if DEBUG > 1
   xer_fprint(stdout, &asn_DEF_JjfsDir, asn_dir);
+#endif
+  
+#ifdef JJFS_CACHE_XML
+  xer_fprint(f, &asn_DEF_JjfsDir, asn_dir);
+#else
+  ber_fprint(f, &asn_DEF_JjfsDir, asn_dir);  
+#endif
+  /* unlock the file */
+  flock(fd, LOCK_UN);
+  close(fd);
+
+  /* Free the ASN.1 structure */
   asn_DEF_JjfsDir.free_struct(&asn_DEF_JjfsDir, asn_dir, 0);
   return 0;
 }
 
-#ifdef JJFS_CACHE_XML
-static void jjfs_cache_decode_xml() {
-
-}
-#else
-static void jjfs_cache_decode_ber() {
-
-}
-#endif
-
-#define LEVEL_PADDING(lvl) \
-  do {                     \
+#ifdef DEBUG
+#define LEVEL_PADDING(lvl)                              \
+  do {                                                  \
     unsigned i;                                         \
     for (i = 0; i < (lvl); i++) fprintf(stderr, "  ");  \
   } while(0)
 
-#ifdef DEBUG
 static void jjfs_cache_debug_print_dir(unsigned level, jjfs_cache_dir *dir) {
   LEVEL_PADDING(level);
   fprintf(stderr, "%s, %lu\n", dir->name, dir->size);
@@ -182,6 +192,7 @@ static int jjfs_build_cache(sftp_session sftp, const char *path,
 }
 
 int jjfs_cache_rebuild() {
+  JJFS_DEBUG_PRINT(1, "Rebuilding cache file %s\n", jjfs_get_cache_file());
   const char *topdir = jjfs_get_top_dir();
   top.name = topdir;
   top.size = 11;
@@ -189,7 +200,7 @@ int jjfs_cache_rebuild() {
   jjfs_build_cache(jjfs_sftp(), topdir, &top);
   jjfs_disconn();
 
-#ifdef DEBUG
+#if DEBUG > 1
   jjfs_cache_debug_print();
 #endif
 
@@ -197,14 +208,42 @@ int jjfs_cache_rebuild() {
   return 0;
 }
 
-static void jjfs_cache_read() {
-  const char *cache_file = jjfs_get_cache_file();  
-  
+static int jjfs_cache_read() {
+  struct stat s;
+  const char *cache_file = jjfs_get_cache_file();
+  int r = stat(chache_file, &s);
+
+  if (r == -1) {
+    switch(errno) {
+    case ENOTDIR:
+    case ENAMETOOLONG:
+      JJFS_DIE("Cache file %s does not exist!\n", cache_file);
+    case EACCES:
+      JJFS_DIE("You do not seem to have permission to read cache file %s\n",
+               cache_file);
+    case ENOENT:
+      return -1;
+    default:
+      JJFS_DIE("Error reading cache file\n");
+    }
+  }
+
+  if (!S_ISREG(s.st_mode) && !S_ISLINK(s.st_mode)) {
+    JJFS_DIE("Cache file %s is some weird file\n", cache_file);
+  } else {
+    return 0;
+  }
+
 }
 
 int jjfs_cache_init() {
-  jjfs_cache_rebuild();
-
+  if (jjfs_cache_read() == -1) {
+    JJFS_DEBUG_PRINT(1, "Cache file not found, trying to rebuild\n");
+    jjfs_cache_rebuild();
+    if (jjfs_cache_read() == -1) {
+      return -1;
+    }
+  }
   
   return 0;
 }

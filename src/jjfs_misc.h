@@ -26,10 +26,11 @@
 #define JJFS_SCRATCH_SIZE 2048
 
 #ifdef DEBUG
-#define JJFS_DEBUG_PRINT(...) \
-  fprintf(stderr, ##__VA_ARGS__)
+#define JJFS_DEBUG_PRINT(lvl, ...)              \
+  if (lvl >= DEBUG)                             \
+    fprintf(stderr, ##__VA_ARGS__)
 #else
-#define JJFS_DEBUG_PRINT(...)
+#define JJFS_DEBUG_PRINT(lvl, ...)
 #endif
 
 #define JJFS_DIE_LINO_FILE(lino, file, uncond, ...)                     \
