@@ -301,10 +301,10 @@ static int jjfs_cache_read() {
   char *buf = calloc(s.st_size, 1);
   FILE *f = fopen(cache_file, "rb");
   if (!f) JJFS_DIE("Failed to open cache file for writing\n");
-  size_t size = fread(buf, 1, sizeof(buf), f);
+  size_t size = fread(buf, 1, s.st_size, f);
   if (!size) JJFS_DIE("Cache file corrupted");
   
-  JjfsDir_t asn_top;
+  JjfsDir_t* asn_top = NULL;
   asn_dec_rval_t rval = ber_decode(0, &asn_DEF_JjfsDir, (void**)&asn_top, buf, size);
 
   if (rval.code == RC_FAIL) {
@@ -314,7 +314,7 @@ static int jjfs_cache_read() {
   } else if (rval.code != RC_OK) {
     return -1;
   }
-  jjfs_build_cache_from_asn(&top, &asn_top);
+  jjfs_build_cache_from_asn(&top, asn_top);
 
   return 0;
 }
