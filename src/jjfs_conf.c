@@ -17,6 +17,10 @@
 
 #include "config.h"
 #include <stdio.h>
+#include <unistd.h>
+#ifdef linux
+#include <getopt.h>
+#endif
 #include <libconfig.h>
 #include "jjfs_conf.h"
 #include "jjfs_misc.h"
@@ -43,17 +47,20 @@
 #define JJFS_DIR "/.jjfs/"
 #endif
 
-enum jjfs_conf_cmdl_args = {
+typedef enum {
   server_idx,
+  conf_file_idx,
+  mountpoint_idx,
   port_idx,
   user_idx,
   cache_file_idx,
   staging_dir_idx,
   top_dir_idx,
   sshconfig_idx,
+  prefetch_bytes_idx,
   /* Must be last */
   jjfs_conf_cmdl_args_last
-};
+} jjfs_conf_cmdl_args;
 
 static char **cmdl_args;
 
@@ -115,7 +122,7 @@ int jjfs_is_rebuild() {
 #define JJFS_READ_STR_OR_DIE_LINO(lino, mp, var)                        \
   do {                                                                  \
     char *c;                                                            \
-    if (c = cmdl_args[var##_idx]) {                                     \
+    if ((c = cmdl_args[var##_idx])) {                                   \
       var = strdup(c);                                                  \
     } else {                                                            \
       JJFS_PATH(mp, var);                                               \
@@ -135,7 +142,7 @@ int jjfs_is_rebuild() {
 #define JJFS_READ_STR_OR_DEFAULT(mp, var, dflt)                         \
   do {                                                                  \
     char *c;                                                            \
-    if (c = cmdl_args[var##_idx]) {                                     \
+    if ((c = cmdl_args[var##_idx])) {                                   \
       var = strdup(c);                                                  \
     } else if (mp) {                                                    \
       JJFS_PATH(mp, var);                                               \
@@ -148,8 +155,8 @@ int jjfs_is_rebuild() {
 #define JJFS_READ_INT_OR_DEFAULT(mp, var, dflt)                         \
     do {                                                                \
       char *c;                                                          \
-      if (c = cmdl_args[var##_idx]) {                                   \
-        var = strtol(c);                                                \
+      if ((c = cmdl_args[var##_idx])) {                                 \
+        var = strtol(c, NULL, 10);                                      \
       } else if (mp) {                                                  \
         JJFS_PATH(mp, var);                                             \
         var = dflt;                                                     \
@@ -177,17 +184,17 @@ static void jjfs_tilde_expand(const char **path) {
 static int optn;
 
 static struct option longopts[] = {
-  {"version", no_argument, NULL, "v"},
-  {"server", reuired_argument, NULL, "s"},
-  {"port", required_argument, NULL, "p"},
-  {"user", required_argument, NULL, "u"},
-  {"cache-file", required_argument, NULL, "f"},
-  {"conf-file", required_argument, NULL, "c"},
+  {"version", no_argument, NULL, 'v'},
+  {"server", required_argument, NULL, 's'},
+  {"port", required_argument, NULL, 'p'},
+  {"user", required_argument, NULL, 'u'},
+  {"cache-file", required_argument, NULL, 'f'},
+  {"conf-file", required_argument, NULL, 'c'},
   {"staging-dir", required_argument, &optn, 1},
   {"sshconfig", required_argument, &optn, 2},
-  {"mount-on", required_argument, NULL, "m"},
-  {"help", no_argument, NULL, "h"},
-  {"rebuild-cache", no_argument, NULL, "r"},
+  {"mount-on", required_argument, NULL, 'm'},
+  {"help", no_argument, NULL, 'h'},
+  {"rebuild-cache", no_argument, NULL, 'r'},
   {NULL, 0, NULL, 0}
 };
 
@@ -225,7 +232,7 @@ static void jjfs_parse_cmdl(int argc, char **argv) {
       }
       break;
       
-    default: echo_usage();
+    default: printf("Illegal argument\n");
     }
   }
   
@@ -234,8 +241,6 @@ static void jjfs_parse_cmdl(int argc, char **argv) {
 
 }
 
-#define IF_NOT_NULL_ELSE(thing, ifnull) \
-  (thing != NULL ? thing : ifnull)
 
 void jjfs_read_conf(int argc, char **argv) {
 
@@ -311,7 +316,7 @@ void jjfs_read_conf(int argc, char **argv) {
   jjfs_tilde_expand(&cache_file);
   jjfs_tilde_expand(&sshconfig);
 
-  JJFS_DEBUG_PRINT(1, "Done parsing conf");
+  JJFS_DEBUG_PRINT(1, "Done parsing conf\n");
   JJFS_DEBUG_PRINT(1, "Mountp: %s\n", mountp);
   JJFS_DEBUG_PRINT(1, "Server: %s\n", jjfs_get_server());
   JJFS_DEBUG_PRINT(1, "Port: %d\n", *jjfs_get_port());

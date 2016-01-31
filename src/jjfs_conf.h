@@ -37,7 +37,7 @@ const char *jjfs_get_sshconfig();
 
 const char *jjfs_get_cache_file();
 
-1const int * const jjfs_get_port();
+const int * const jjfs_get_port();
 
 const char *jjfs_get_mountpoint();
 

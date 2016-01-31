@@ -25,9 +25,9 @@
 /* Size used for various allocations of strings */
 #define JJFS_SCRATCH_SIZE 2048
 
-#ifdef DEBUG
+#if DEBUG > 0
 #define JJFS_DEBUG_PRINT(lvl, ...)              \
-  if (lvl >= DEBUG)                             \
+  if (DEBUG >= lvl)                             \
     fprintf(stderr, ##__VA_ARGS__)
 #else
 #define JJFS_DEBUG_PRINT(lvl, ...)
@@ -43,5 +43,12 @@
 
 #define JJFS_DIE(...) \
   JJFS_DIE_LINO_FILE(__LINE__, __FILE__, 0,  __VA_ARGS__)
+
+#define JJFS_DIE_IF_NOT(thing, ...)            \
+  do {                                          \
+    if (!thing) JJFS_DIE(__VA_ARGS__);          \
+  } while (0)
+
+#define IF_NOT_NULL_ELSE(thing, ifnull) ((thing) != NULL ? (thing) : (ifnull))
 
 #endif /* ifndef JJFS_MISC_H */

@@ -39,18 +39,18 @@ typedef struct jjfs_cache_dir {
  * Enum for the tag of `jjfs_cache_entry'.
  */
 typedef enum {
-  JJFS_CACHE_DIR,
-  JJFS_CACHE_FILE
+  JJFS_CACHE_DIR = 0,
+  JJFS_CACHE_FILE = 1
 } jjfs_cache_type;
 
 /**
  * An entry in the cache.
  */
 typedef struct {
-  jjfs_cache_type tag;
+  jjfs_cache_type tag:1;
   union {
-    jjfs_cache_file file;
-    jjfs_cache_dir dir;
+    jjfs_cache_file *file;
+    jjfs_cache_dir *dir;
   };
 } jjfs_cache_entry;
 
