@@ -120,6 +120,7 @@ static int jjfs_build_cache_from_asn(jjfs_cache_dir *dir, JjfsDir_t *asn_dir) {
              "dir %s\n", dir->name);
   }
 
+  
   jjfs_cache_dir *subdirs = nsubdirs ?
     calloc(nsubdirs, sizeof(jjfs_cache_dir)) : NULL;
   if ((!subdirs) && nsubdirs) {
@@ -369,61 +370,80 @@ void jjfs_cache_free() {
   jjfs_cache_free_dir(&top);
 }
 
-static jjfs_cache_entry *jjfs_cache_lookup_component(const char *comp,
-                                              char **next,
-                                              jjfs_cache_dir *dir) {
-  jjfs_cache_file *f = dir->files;
-  while(f) {
-    if (!strcmp(f->name, comp)) {
-      ret.tag = JJFS_CACHE_FILE;
-      ret.file = f;
-      return &ret;
+/* Who the hell has more than 64 levels? */
+#define JJFS_MAX_PATH_COMPS 64
+
+static int jjfs_cache_lookup_component(char **comps,
+                                       jjfs_cache_dir *dir) {
+
+  char *comp = comps[0];
+  // if this is the last entry.
+  unsigned last = (comps[1] == NULL);
+
+  if (last) {
+    jjfs_cache_file *f = dir->files;
+    while(f) {
+      if (!strcmp(f->name, comp)) {
+        ret.tag = JJFS_CACHE_FILE;
+        ret.file = f;
+        return 0;
+      }
+      f = f->next;
     }
+    
+    jjfs_cache_dir *d = dir->subdirs;    
+    while(d) {
+      if (!strcmp(d->name, comp)) {
+        ret.tag = JJFS_CACHE_DIR;
+        ret.dir = d;
+        return 0;
+      }
+      d = d->next;
+    }
+    return -1;
   }
 
   jjfs_cache_dir *d = dir->subdirs;
   while(d) {
     if (!strcmp(d->name, comp)) {
-      if (!next) return jjfs_cache_lookup_component(comp, next + 1, d);
-      ret.tag = JJFS_CACHE_DIR;
-      ret.dir = d;
+      return jjfs_cache_lookup_component(comps + 1, d);
     }
+    d = d->next;
   }
-  return NULL;
+  return -1;
 }
 
-jjfs_cache_entry *jjfs_cache_lookup_path(const char *path) {
+jjfs_cache_entry *jjfs_cache_lookup_path(const char *inpath) {
+
+  char *c;
+  unsigned i;
+  int succ = -1;
+  char *comps[JJFS_MAX_PATH_COMPS] = {0};
+
+  char *path = strndup(inpath, JJFS_SCRATCH_SIZE);
+  char *n;
+  // remove any newlines
+  for (n = path; *n != '\0'; n++) if (*n == '\n') *n = '\0';
+  
   JJFS_DEBUG_PRINT(1, "Looking up cache entry for path %s\n", path);
-
-  if (!strcmp(path, "/\n")) {
-    ret.tag = JJFS_CACHE_DIR;
-    ret.dir = &top;
-    return &ret;
-  }
-
-  char *comps = strdup(path);
-  char *c = comps + 1;
-  unsigned ncomps = 0;
-
-  while(c) {
-    if (*c == '/') {
-      ncomps++;
-      *c = '\0';
-    }
-    c++;
-  }
-
-  c = comps + 1;
-  char **components = calloc(ncomps, sizeof(char*));
-  unsigned n = 0;
-
-  while(c) {
-    if (*c == '\0') {
-      components[n++] = c + 1;
-    }
-    c++;
+  
+  for (c = strtok(path, "/"), i = 0; c; c = strtok(NULL, "/"), i++) {
+    if (i == JJFS_MAX_PATH_COMPS - 2) JJFS_DIE("Too many path components\n");
+    comps[i] = c;
   }
   
-  return jjfs_cache_lookup_component(c, components + 1, &top);
-}
+  if (comps[1] == NULL && !strcmp(path, top.name)) {
+    ret.tag = JJFS_CACHE_DIR;
+    ret.dir = &top;
+    succ = 0;
+  } else {
+    succ = jjfs_cache_lookup_component((char**)&comps[1], &top);
+  }
+  
+  free(path);
 
+  if (succ == 0) return &ret;
+
+  JJFS_DEBUG_PRINT(1, "Lookup failed!\n");
+  return NULL;
+}
