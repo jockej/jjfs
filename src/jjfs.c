@@ -38,14 +38,17 @@ int main(int argc, char **argv) {
   }
 
   
-  jjfs_cache_init();
+  if (jjfs_cache_init() == -1) {
+    JJFS_DIE("Failed to initialize cache\n");
+  }
 
   jjfs_cache_entry *c;
   char s[2048];
   while(1) {
     fgets(s, 2048, stdin);
     c = jjfs_cache_lookup_path(s);
-    if (JJFS_IS_DIR(c))
+    if (!c) JJFS_DIE("Failed to lookup path %s\n", s);
+    else if (JJFS_IS_DIR(c))
       printf("Dir: name: %s, size %lu\n", c->dir->name, c->dir->size);
     else
       printf("File: name: %s, size %lu\n", c->file->name, c->file->size);      

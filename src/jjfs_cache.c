@@ -20,11 +20,9 @@
  */
 #include <stdio.h>
 #include <fcntl.h>
-#if defined(linux)
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/file.h>
-#endif
 #include "jjfs_cache.h"
 #include "jjfs_conf.h"
 #include "jjfs_sftp.h"
@@ -111,20 +109,25 @@ static int jjfs_build_cache_from_asn(jjfs_cache_dir *dir, JjfsDir_t *asn_dir) {
 
   dir->name = strdup((char*)asn_dir->name.buf);
   dir->size = asn_dir->size;
+  if ((!strcmp(dir->name, ".")) && (!strcmp(dir->name, ".."))) return 0;
   size_t nfiles = asn_dir->files.list.count;
   size_t nsubdirs = asn_dir->subdirs.list.count;
 
-  jjfs_cache_file *files = calloc(nfiles, sizeof(jjfs_cache_file));
-  JJFS_DIE_IF_NOT(files,
-                  "Couldn't allocate memory for cache entries for files of " \
-                  "dir %s\n", dir->name);
+  jjfs_cache_file *files = nfiles ?
+    calloc(nfiles, sizeof(jjfs_cache_file)) : NULL;
+  if ((!files) && nfiles) {
+    JJFS_DIE("Couldn't allocate memory for cache entries for files of " \
+             "dir %s\n", dir->name);
+  }
 
-  jjfs_cache_dir *subdirs = calloc(nsubdirs, sizeof(jjfs_cache_dir));
-  JJFS_DIE_IF_NOT(subdirs,
-                  "Couldn't allocate memory for cache entries for subdirs of " \
-                  "dir %s\n", dir->name);
+  jjfs_cache_dir *subdirs = nsubdirs ?
+    calloc(nsubdirs, sizeof(jjfs_cache_dir)) : NULL;
+  if ((!subdirs) && nsubdirs) {
+  JJFS_DIE("Couldn't allocate memory for cache entries for subdirs of " \
+           "dir %s\n", dir->name);
+  }
   
-  dir->files = files;
+  dir->files = NULL;
   JJFS_DEBUG_PRINT(2, "Adding files to cache\n");
   size_t i;
   jjfs_cache_file *fprev = NULL;
@@ -136,24 +139,27 @@ static int jjfs_build_cache_from_asn(jjfs_cache_dir *dir, JjfsDir_t *asn_dir) {
                      files[i].name, files[i].size);
     files[i].next = fprev;
     fprev = &files[i];
+    dir->files = fprev;
   }
 
-  dir->subdirs = subdirs;
+  dir->subdirs = NULL;
   jjfs_cache_dir *dprev = NULL;
   for (i = 0; i < nsubdirs; i++) {
     jjfs_build_cache_from_asn(&subdirs[i], asn_dir->subdirs.list.array[i]);
     subdirs[i].next = dprev;
     dprev = &subdirs[i];
+    dir->subdirs = dprev;
   }
 
-  JJFS_DEBUG_PRINT(3, "Cache built from file:\n\n");
 #if DEBUG > 2
-  jjfs_cache_debug_print();
+  if (dir == &top) {
+    JJFS_DEBUG_PRINT(3, "Cache built from file:\n\n");
+    jjfs_cache_debug_print();
+  }
 #endif
 
   return 0;
 }
-
 
 static int jjfs_cache_writer(const void *buf, size_t size, void *app_key) {
   FILE *f = (FILE*) app_key;
@@ -256,9 +262,12 @@ static int jjfs_build_cache_sftp(sftp_session sftp, const char *path,
 int jjfs_cache_rebuild() {
   JJFS_DEBUG_PRINT(1, "Rebuilding cache file %s\n", jjfs_get_cache_file());
   const char *topdir = jjfs_get_top_dir();
-  top.name = topdir;
+  topdir += strlen(topdir);
+  /* Find the last component of topdir, backtrack until we hit a '/' */
+  while(*topdir != '/') topdir--;
+  top.name = topdir++;          /* Add one to point just beyond the '/' */
   top.size = 11;
-  jjfs_conn();
+  if (jjfs_conn() == -1) return -1;
   jjfs_build_cache_sftp(jjfs_sftp(), topdir, &top);
   jjfs_disconn();
 
@@ -323,7 +332,10 @@ int jjfs_cache_init() {
   JJFS_DEBUG_PRINT(1, "Initializing the cache structure\n");
   if (jjfs_cache_read() == -1) {
     JJFS_DEBUG_PRINT(1, "Cache file not found, trying to rebuild\n");
-    jjfs_cache_rebuild();
+    if (jjfs_cache_rebuild() == -1) {
+      JJFS_DEBUG_PRINT(1, "Couldn't rebuild cache\n");
+      return -1;
+    }
     JJFS_DEBUG_PRINT(1, "Trying to read cache file again\n");
     if (jjfs_cache_read() == -1) {
       return -1;
@@ -383,8 +395,7 @@ static jjfs_cache_entry *jjfs_cache_lookup_component(const char *comp,
 jjfs_cache_entry *jjfs_cache_lookup_path(const char *path) {
   JJFS_DEBUG_PRINT(1, "Looking up cache entry for path %s\n", path);
 
-
-  if (!strcmp(path, "/")) {
+  if (!strcmp(path, "/\n")) {
     ret.tag = JJFS_CACHE_DIR;
     ret.dir = &top;
     return &ret;

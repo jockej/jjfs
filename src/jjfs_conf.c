@@ -18,9 +18,7 @@
 #include "config.h"
 #include <stdio.h>
 #include <unistd.h>
-#ifdef linux
 #include <getopt.h>
-#endif
 #include <libconfig.h>
 #include "jjfs_conf.h"
 #include "jjfs_misc.h"
