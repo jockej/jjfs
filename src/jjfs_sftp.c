@@ -80,3 +80,12 @@ int jjfs_disconn() {
   //ssh_free(ssh);
   return 0;
 }
+
+int jjfs_start_async_read(const char *path) {
+
+
+
+
+  return 0;
+}
+
