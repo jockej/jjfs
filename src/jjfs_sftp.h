@@ -23,6 +23,8 @@ int jjfs_conn();
 
 int jjfs_disconn();
 
+int jjfs_start_async_read(const char *path);
+
 sftp_session jjfs_sftp();
 
 ssh_session jjfs_ssh();

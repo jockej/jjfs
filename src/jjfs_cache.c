@@ -113,44 +113,29 @@ static int jjfs_build_cache_from_asn(jjfs_cache_dir *dir, JjfsDir_t *asn_dir) {
   size_t nfiles = asn_dir->files.list.count;
   size_t nsubdirs = asn_dir->subdirs.list.count;
 
-  jjfs_cache_file *files = nfiles ?
-    calloc(nfiles, sizeof(jjfs_cache_file)) : NULL;
-  if ((!files) && nfiles) {
-    JJFS_DIE("Couldn't allocate memory for cache entries for files of " \
-             "dir %s\n", dir->name);
-  }
-
-  
-  jjfs_cache_dir *subdirs = nsubdirs ?
-    calloc(nsubdirs, sizeof(jjfs_cache_dir)) : NULL;
-  if ((!subdirs) && nsubdirs) {
-  JJFS_DIE("Couldn't allocate memory for cache entries for subdirs of " \
-           "dir %s\n", dir->name);
-  }
-  
-  dir->files = NULL;
   JJFS_DEBUG_PRINT(2, "Adding files to cache\n");
   size_t i;
   jjfs_cache_file *fprev = NULL;
   for (i = 0; i < nfiles; i++) {
     JjfsFile_t *f = asn_dir->files.list.array[i];
-    files[i].name = strdup((char*)f->name.buf);
-    files[i].size = f->size;
+    jjfs_cache_file *cf = calloc(1, sizeof(jjfs_cache_file));
+    cf->name = strdup((char*)f->name.buf);
+    cf->size = f->size;
     JJFS_DEBUG_PRINT(3, "Added file %s to cache with size %lu\n",
-                     files[i].name, files[i].size);
-    files[i].next = fprev;
-    fprev = &files[i];
-    dir->files = fprev;
+                     cf->name, cf->size);
+    cf->next = fprev;
+    fprev = cf;
   }
+  dir->files = fprev;
 
-  dir->subdirs = NULL;
   jjfs_cache_dir *dprev = NULL;
   for (i = 0; i < nsubdirs; i++) {
-    jjfs_build_cache_from_asn(&subdirs[i], asn_dir->subdirs.list.array[i]);
-    subdirs[i].next = dprev;
-    dprev = &subdirs[i];
-    dir->subdirs = dprev;
+    jjfs_cache_dir *d = calloc(1, sizeof(jjfs_cache_dir));
+    jjfs_build_cache_from_asn(d, asn_dir->subdirs.list.array[i]);
+    d->next = dprev;
+    dprev = d;
   }
+  dir->subdirs = dprev;
 
 #if DEBUG > 2
   if (dir == &top) {
