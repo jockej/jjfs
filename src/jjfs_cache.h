@@ -47,11 +47,11 @@ typedef enum {
  * An entry in the cache.
  */
 typedef struct {
-  jjfs_cache_type tag:1;
   union {
     jjfs_cache_file *file;
     jjfs_cache_dir *dir;
   };
+  jjfs_cache_type tag:1;
 } jjfs_cache_entry;
 
 #define JJFS_IS_DIR(entry) (entry->tag == JJFS_CACHE_DIR)
