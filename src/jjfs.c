@@ -23,6 +23,22 @@
 #include "jjfs_misc.h"
 #include "jjfs_sftp.h"
 #include "jjfs_cache.h"
+#include "jjfs_fuse.h"
+
+struct fuse_operations jjfs_oper = {
+  .getattr = jjfs_getattr,
+  /* .fgetattr = jjfs_fgetattr, */
+  /* .read = jjfs_read, */
+  /* .readbuf = jjfs_read_buf, */
+  .open = jjfs_open,
+  /* .release = jjfs_release, */
+  /* .opendir = jjfs_opendir, */
+  /* .readdir = jjfs_readdir, */
+  /* .releasedir = jjfs_releasedir, */
+  .init = jjfs_init,
+  .destroy = jjfs_destroy,
+  /* .access = jjfs_access */
+};
 
 
 int main(int argc, char **argv) {
@@ -37,24 +53,9 @@ int main(int argc, char **argv) {
     exit(EXIT_SUCCESS);
   }
 
+  char **fargv = calloc(3, sizeof(char*));
+  fargv[0] = strdup("jjfs");
+  fargv[1] = strdup(jjfs_get_mountpoint());
   
-  if (jjfs_cache_init() == -1) {
-    JJFS_DIE("Failed to initialize cache\n");
-  }
-
-  char s[2048];
-  while(1) {
-    fgets(s, 2048, stdin);
-    if ((!strcmp(s, "q\n")) || (!strcmp(s, "\n"))) break;
-    jjfs_cache_entry *c = jjfs_cache_lookup_path(s);
-    if (!c) JJFS_DIE("Failed to lookup path %s\n", s);
-    else if (JJFS_IS_DIR(c))
-      printf("Dir: name: %s, size %lu\n", c->dir->name, c->dir->size);
-    else
-      printf("File: name: %s, size %lu\n", c->file->name, c->file->size);      
-  }
-  
-  jjfs_cache_free();
-  jjfs_conf_free();
-  return 0;
+  return fuse_main(2, fargv, &jjfs_oper, NULL);
 }

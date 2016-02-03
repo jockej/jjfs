@@ -2,15 +2,11 @@
 
 AC_PREREQ([2.69])
 AC_INIT([jjfs], [0.1], [joakim.jalap@fastmail.com])
+AC_USE_SYSTEM_EXTENSIONS
 AM_INIT_AUTOMAKE([-Wall foreign])
 
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADERS([config.h])
-
-AC_CONFIG_FILES([Makefile
-                 src/Makefile
-                 src/asn1/Makefile
-                 doc/Makefile])
 
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -19,12 +15,20 @@ AC_PROG_CC
 AM_PROG_AR
 AC_PROG_LIBTOOL
 
-# Checks for libraries.
 AC_SEARCH_LIBS([config_init], [config], [],
                [AC_MSG_ERROR([Couldn't find libconfig.])])
 
 AC_SEARCH_LIBS([sftp_new], [ssh], [],
                [AC_MSG_ERROR([Couldn't find libssh.])])
+
+
+dnl PKG_CHECK_MODULES([CONFIG], [config])
+dnl PKG_CHECK_MODULES([SSH], [ssh])
+
+PKG_CHECK_MODULES([FUSE], [fuse])
+
+AC_SEARCH_LIBS([fuse_main], [fuse], [],
+               [AC_MSG_ERROR([Couldn't find libfuse.])])
 
 # AC_SEARCH_LIBS(
 
@@ -51,24 +55,9 @@ AC_FUNC_STRNLEN
 AC_FUNC_STRTOD
 AC_CHECK_FUNCS([memchr memmove memset realpath strdup strerror])
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+AC_CONFIG_FILES([Makefile
+                 src/Makefile
+                 src/asn1/Makefile
+                 doc/Makefile])
 
 AC_OUTPUT

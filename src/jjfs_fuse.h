@@ -38,7 +38,7 @@ int jjfs_release(const char *path, struct fuse_file_info *fi);
 int jjfs_opendir(const char *path, struct fuse_file_info *fi);
 
 int jjfs_readdir(const char *path, void *, fuse_fill_dir_t filler, off_t offs,
-                 struct fuse_file_info *fi, enum fuse_readdir_flags);
+                 struct fuse_file_info *fi);
 
 int jjfs_releasedir(const char *path, struct fuse_file_info *fi);
 

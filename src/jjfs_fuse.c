@@ -17,7 +17,10 @@
 
 #include "jjfs_fuse.h"
 #include "jjfs_cache.h"
+#include "jjfs_sftp.h"
 #include <unistd.h>
+#include <stdio.h>
+#include "jjfs_conf.h"
 
 #define JJFS_DEFAULT_MODE 0744
 
@@ -30,14 +33,15 @@ int jjfs_getattr(const char *path, struct stat *st) {
     fprintf(stderr, "No such path in cache\n");
     return -1;
   }
-  
-  st->st_size = ent->size;
+
+  if (JJFS_IS_DIR(ent)) st->st_size = ent->dir->size;
+  else st->st_size = ent->file->size;
   st->st_uid = getuid();
   st->st_gid = getgid();
   mode_t mode = JJFS_DEFAULT_MODE;
   if (JJFS_IS_DIR(ent)) mode |= S_IFDIR;
   else mode |= S_IFREG;
-  st->st_mode;
+  st->st_mode = mode;
   return 0;
 }
 
@@ -52,17 +56,28 @@ int jjfs_getattr(const char *path, struct stat *st) {
 int jjfs_open(const char *path, struct fuse_file_info *fi) {
 
   fprintf(stderr, "Got request to open path %s\n", path);
-  jjfs_conn();
+  /* jjfs_conn(); */
   
-  
+  return 0;
 }
 
 /* int jjfs_release(const char *path, struct fuse_file_info *fi); */
 
 /* int jjfs_opendir(const char *path, struct fuse_file_info *fi); */
 
-/* int jjfs_readdir(const char *path, void *, fuse_fill_dir_t filler, off_t offs, */
-                 /* struct fuse_file_info *fi, enum fuse_readdir_flags); */
+int jjfs_readdir(const char *path, void * buf, fuse_fill_dir_t filler, off_t offs,
+                 struct fuse_file_info *fi) {
+  jjfs_cache_entry *ent = jjfs_cache_lookup_path(path);
+  
+  if (!JJFS_IS_DIR(ent)) return -1;
+  jjfs_cache_file *f = ent->dir->files;
+  for (; f; f = f->next) filler(buf, f->name, NULL, 0);
+
+  jjfs_cache_dir *d = ent->dir->subdirs;
+  for (; d; d = d->next) filler(buf, d->name, NULL, 0);
+
+  return 0;
+}
 
 int jjfs_releasedir(const char *path, struct fuse_file_info *fi) {
   return 0;
