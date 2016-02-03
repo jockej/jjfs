@@ -32,8 +32,8 @@ struct fuse_operations jjfs_oper = {
   /* .readbuf = jjfs_read_buf, */
   .open = jjfs_open,
   /* .release = jjfs_release, */
-  /* .opendir = jjfs_opendir, */
-  /* .readdir = jjfs_readdir, */
+  .opendir = jjfs_opendir,
+  .readdir = jjfs_readdir,
   /* .releasedir = jjfs_releasedir, */
   .init = jjfs_init,
   .destroy = jjfs_destroy,
@@ -53,9 +53,12 @@ int main(int argc, char **argv) {
     exit(EXIT_SUCCESS);
   }
 
-  char **fargv = calloc(3, sizeof(char*));
+  char **fargv = calloc(6, sizeof(char*));
   fargv[0] = strdup("jjfs");
   fargv[1] = strdup(jjfs_get_mountpoint());
+  fargv[2] = "-d";
+  fargv[3] = "-s";
+  fargv[4] = "-f";
   
-  return fuse_main(2, fargv, &jjfs_oper, NULL);
+  return fuse_main(5, fargv, &jjfs_oper, NULL);
 }

@@ -19,6 +19,7 @@
 #include "jjfs_cache.h"
 #include "jjfs_sftp.h"
 #include <unistd.h>
+#include <errno.h>
 #include <stdio.h>
 #include "jjfs_conf.h"
 
@@ -31,11 +32,16 @@ int jjfs_getattr(const char *path, struct stat *st) {
 
   if (!ent) {
     fprintf(stderr, "No such path in cache\n");
-    return -1;
+    return -ENOENT;
   }
 
-  if (JJFS_IS_DIR(ent)) st->st_size = ent->dir->size;
-  else st->st_size = ent->file->size;
+  if (JJFS_IS_DIR(ent)) {
+    st->st_nlink = 2;
+    st->st_size = ent->dir->size;
+  } else {
+    st->st_size = ent->file->size;
+    st->st_nlink = 1;
+  }
   st->st_uid = getuid();
   st->st_gid = getgid();
   mode_t mode = JJFS_DEFAULT_MODE;
@@ -63,7 +69,9 @@ int jjfs_open(const char *path, struct fuse_file_info *fi) {
 
 /* int jjfs_release(const char *path, struct fuse_file_info *fi); */
 
-/* int jjfs_opendir(const char *path, struct fuse_file_info *fi); */
+int jjfs_opendir(const char *path, struct fuse_file_info *fi) {
+  return 0;
+}
 
 int jjfs_readdir(const char *path, void * buf, fuse_fill_dir_t filler, off_t offs,
                  struct fuse_file_info *fi) {
