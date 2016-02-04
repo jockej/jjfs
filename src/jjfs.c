@@ -16,8 +16,6 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include <limits.h>
-#include <getopt.h>
 #include "config.h"
 #include "jjfs_conf.h"
 #include "jjfs_misc.h"

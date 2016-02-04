@@ -250,7 +250,7 @@ int jjfs_cache_rebuild() {
   top.name = "/";
   top.size = 11;
   if (jjfs_conn() == -1) return -1;
-  jjfs_build_cache_sftp(jjfs_sftp(), jjfs_get_topdir(), &top);
+  jjfs_build_cache_sftp(jjfs_sftp(), jjfs_get_top_dir(), &top);
   jjfs_disconn();
 
 #if DEBUG > 2
@@ -357,6 +357,7 @@ void jjfs_cache_free() {
 static int jjfs_cache_lookup_component(char **comps,
                                        jjfs_cache_dir *dir) {
 
+  if (comps == NULL || comps[0] == NULL) return -1;
   char *comp = comps[0];
   // if this is the last entry.
   unsigned last = (comps[1] == NULL);
@@ -418,7 +419,7 @@ jjfs_cache_entry *jjfs_cache_lookup_path(const char *inpath) {
     ret.dir = &top;
     succ = 0;
   } else {
-    succ = jjfs_cache_lookup_component((char**)&comps[1], &top);
+    succ = jjfs_cache_lookup_component((char**)&comps[0], &top);
   }
   
   free(path);
