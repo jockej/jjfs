@@ -247,14 +247,10 @@ static int jjfs_build_cache_sftp(sftp_session sftp, const char *path,
 
 int jjfs_cache_rebuild() {
   JJFS_DEBUG_PRINT(1, "Rebuilding cache file %s\n", jjfs_get_cache_file());
-  const char *topdir = jjfs_get_top_dir();
-  topdir += strlen(topdir);
-  /* Find the last component of topdir, backtrack until we hit a '/' */
-  while(*topdir != '/') topdir--;
-  top.name = topdir++;          /* Add one to point just beyond the '/' */
+  top.name = "/";
   top.size = 11;
   if (jjfs_conn() == -1) return -1;
-  jjfs_build_cache_sftp(jjfs_sftp(), topdir, &top);
+  jjfs_build_cache_sftp(jjfs_sftp(), jjfs_get_topdir(), &top);
   jjfs_disconn();
 
 #if DEBUG > 2
@@ -417,7 +413,7 @@ jjfs_cache_entry *jjfs_cache_lookup_path(const char *inpath) {
     comps[i] = c;
   }
   
-  if (comps[1] == NULL && !strcmp(path, top.name)) {
+  if (strcmp(path, "/") == 0) {
     ret.tag = JJFS_CACHE_DIR;
     ret.dir = &top;
     succ = 0;
