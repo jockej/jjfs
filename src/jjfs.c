@@ -32,17 +32,113 @@ struct fuse_operations jjfs_oper = {
   /* .release = jjfs_release, */
   .opendir = jjfs_opendir,
   .readdir = jjfs_readdir,
-  /* .releasedir = jjfs_releasedir, */
+  .releasedir = jjfs_releasedir,
   .init = jjfs_init,
   .destroy = jjfs_destroy,
-  /* .access = jjfs_access */
+  .access = jjfs_access,
 };
+
+
+struct jjfs_args {
+  char *server;
+  char *user;
+  char *cache_file;
+  char *conf_file;
+  char *staging_dir;
+  char *sshconfig;
+  char *mount_on;
+  int port;
+  int prefetch_bytes;
+  int rebuild;
+};
+
+enum {
+  KEY_HELP,
+  KEY_VERSION,
+  KEY_REBUILD
+};
+
+#define JJFS_OPT(t, p, v)\
+  {t, offsetof(struct jjfs_args, p), v}
+
+#define JJFS_LONGOPT(l, fmt, var, v)         \
+  JJFS_OPT("--" #l " " #fmt, var, v),        \
+    JJFS_OPT(#l "=" #fmt, var, v)
+
+#define JJFS_SHORTOPT(s, fmt, var, v)       \
+  JJFS_OPT("-" #s " " #fmt, var, v)
+
+#define JJFS_BOTHOPT(l, s, fmt, var, v)   \
+  JJFS_LONGOPT(l, fmt, var, v),               \
+    JJFS_SHORTOPT(s, fmt, var, v)
+
+
+static struct fuse_opts jjfs_opts {
+  JJFS_BOTHOPT("server", "s", "%s", server, 0),
+    JJFS_BOTHOPT("user", "u", "%s", user, 0),
+    JJFS_BOTHOPT("conf-file", "c", "%s", conf_file),
+    JJFS_LONGOPT("cache-file", "%s", cache_file, 0),
+    JJFS_BOTHOPT("port", "p", "%s", port, 0),
+    JJFS_LONGOPT("staging-dir", "%s", staging_dir, 0),
+    JJFS_LONGOPT("sshconfig", "%s", sshconfig, 0),
+    JJFS_BOTHOPT("mount-on", "m", "%s", mount_on, 0),
+    JJFS_BOTHOPT("rebuild", "r", "", rebuild, 1),
+    FUSE_OPT_KEY("-V", KEY_VERSION),
+    FUSE_OPT_KEY("--version", KEY_VERSION),
+    FUSE_OPT_KEY("-h", KEY_HELP),
+    FUSE_OPT_KEY("--help", KEY_HELP),
+    FUSE_OPT_END
+};
+
+
+static void echo_usage(const char *argv0) {
+  printf("Usage: %s {mountpoint | {-r | --rebuild}} [options]\n"
+         "\n"
+         "general options:\n"
+         "    -o opt [,opt ...]  mount options\n"
+         "    -V | --version     print version\n"
+         "    -h | --help        print help\n"
+         "\n"
+         "jjfs options:\n"
+         "    --server | -s      server\n"
+         , argv0);
+}
+
+static void echo_version() {
+
+  printf(PACKAGE ", version " PACKAGE_VERSION
+         ", please send any bugreports to "
+         PACKAGE_BUGREPORT ".\n");
+}
+
+static int jjfs_opt_proc(void* data, const char *arg, int key,
+                         struct fuse_args *outargs) {
+  switch(key) {
+  case KEY_HELP:
+
+
+
+
+  case KEY_VERSION:
+    
+
+
+  default:
+    
+  }
+
+
+}
 
 
 int main(int argc, char **argv) {
 
   if (argc < 2) JJFS_DIE("Too few arguments");
+
+  struct fuse_args fargs = FUSE_ARGS_INIT(argc, argv);
+
   
+
   jjfs_read_conf(argc, argv);
 
 

@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include "jjfs_conf.h"
 
-#define JJFS_DEFAULT_MODE 0744
+#define JJFS_DEFAULT_MODE 0544
 
 int jjfs_getattr(const char *path, struct stat *st) {
   fprintf(stderr, "Got request to stat path %s\n", path);
@@ -101,5 +101,7 @@ void jjfs_destroy(void *v) {
   jjfs_conf_free();
 }
 
-/* int jjfs_access(const char *path, int ); */
-
+int jjfs_access(const char *path, int amode) {
+  if (amode | W_OK) return -1;
+  else return 0;
+}

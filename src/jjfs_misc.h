@@ -49,6 +49,4 @@
     if (!thing) JJFS_DIE(__VA_ARGS__);          \
   } while (0)
 
-#define IF_NOT_NULL_ELSE(thing, ifnull) ((thing) != NULL ? (thing) : (ifnull))
-
 #endif /* ifndef JJFS_MISC_H */
