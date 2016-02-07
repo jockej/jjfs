@@ -1,3 +1,5 @@
+#ifndef JJFS_CONF_H
+#define JJFS_CONF_H
 /*
  * Copyright (C) 2016  Joakim Jalap
  *
@@ -14,13 +16,30 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include <fuse.h>
+
+struct jjfs_args {
+  char *server;
+  char *user;
+  char *cache_file;
+  char *conf_file;
+  char *staging_dir;
+  char *sshconfig;
+  char *entry;
+  char *top_dir;
+  int port;
+  int prefetch_bytes;
+  int rebuild;
+};
+
+
 
 
 /**
  * Read the config from conf_file.
  *
  */
-void jjfs_read_conf(int argc, char **argv);
+void jjfs_read_conf(struct jjfs_args *args);
 
 /**
  * Free the config memory.
@@ -44,3 +63,5 @@ const char *jjfs_get_mountpoint();
 const char *jjfs_get_staging_dir();
 
 int jjfs_is_rebuild();
+
+#endif /* ifndef JJFS_CONF_H */

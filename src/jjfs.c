@@ -16,6 +16,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include "config.h"
 #include "jjfs_conf.h"
 #include "jjfs_misc.h"
@@ -38,58 +39,39 @@ struct fuse_operations jjfs_oper = {
   .access = jjfs_access,
 };
 
-
-struct jjfs_args {
-  char *server;
-  char *user;
-  char *cache_file;
-  char *conf_file;
-  char *staging_dir;
-  char *sshconfig;
-  char *mount_on;
-  int port;
-  int prefetch_bytes;
-  int rebuild;
-};
-
 enum {
   KEY_HELP,
   KEY_VERSION,
-  KEY_REBUILD
 };
 
-#define JJFS_OPT(t, p, v)\
+#define JJFS_OPT(t, p, v)                \
   {t, offsetof(struct jjfs_args, p), v}
 
-#define JJFS_LONGOPT(l, fmt, var, v)         \
-  JJFS_OPT("--" #l " " #fmt, var, v),        \
-    JJFS_OPT(#l "=" #fmt, var, v)
-
-#define JJFS_SHORTOPT(s, fmt, var, v)       \
-  JJFS_OPT("-" #s " " #fmt, var, v)
-
-#define JJFS_BOTHOPT(l, s, fmt, var, v)   \
-  JJFS_LONGOPT(l, fmt, var, v),               \
-    JJFS_SHORTOPT(s, fmt, var, v)
-
-
-static struct fuse_opts jjfs_opts {
-  JJFS_BOTHOPT("server", "s", "%s", server, 0),
-    JJFS_BOTHOPT("user", "u", "%s", user, 0),
-    JJFS_BOTHOPT("conf-file", "c", "%s", conf_file),
-    JJFS_LONGOPT("cache-file", "%s", cache_file, 0),
-    JJFS_BOTHOPT("port", "p", "%s", port, 0),
-    JJFS_LONGOPT("staging-dir", "%s", staging_dir, 0),
-    JJFS_LONGOPT("sshconfig", "%s", sshconfig, 0),
-    JJFS_BOTHOPT("mount-on", "m", "%s", mount_on, 0),
-    JJFS_BOTHOPT("rebuild", "r", "", rebuild, 1),
-    FUSE_OPT_KEY("-V", KEY_VERSION),
-    FUSE_OPT_KEY("--version", KEY_VERSION),
-    FUSE_OPT_KEY("-h", KEY_HELP),
-    FUSE_OPT_KEY("--help", KEY_HELP),
-    FUSE_OPT_END
+static struct fuse_opt jjfs_opts[] = {
+  JJFS_OPT("--entry %s", entry, 0),
+  JJFS_OPT("--server %s", server, 0),  
+  JJFS_OPT("server=%s", server, 0),  
+  JJFS_OPT("--user %s", user, 0),
+  JJFS_OPT("user=%s", user, 0),  
+  JJFS_OPT("-c %s", conf_file, 0),
+  JJFS_OPT("--conf-file %s", conf_file, 0),
+  JJFS_OPT("conf-file=%s", conf_file, 0),    
+  JJFS_OPT("cache-file=%s", cache_file, 0),
+  JJFS_OPT("--port %i", port, 0),
+  JJFS_OPT("port=%i", port, 0),
+  JJFS_OPT("top-dir=%s", top_dir, 0),
+  JJFS_OPT("--top-dir %s", top_dir, 0),  
+  JJFS_OPT("staging-dir=%s", staging_dir, 0),
+  JJFS_OPT("sshconfig=%s", sshconfig, 0),
+  JJFS_OPT("prefetch-bytes=%i", prefetch_bytes, 0),  
+  JJFS_OPT("--rebuild", rebuild, 1),
+  JJFS_OPT("r", rebuild, 1),  
+  FUSE_OPT_KEY("-V", KEY_VERSION),
+  FUSE_OPT_KEY("--version", KEY_VERSION),
+  FUSE_OPT_KEY("-h", KEY_HELP),
+  FUSE_OPT_KEY("--help", KEY_HELP),
+  FUSE_OPT_END
 };
-
 
 static void echo_usage(const char *argv0) {
   printf("Usage: %s {mountpoint | {-r | --rebuild}} [options]\n"
@@ -111,23 +93,26 @@ static void echo_version() {
          PACKAGE_BUGREPORT ".\n");
 }
 
+/**
+ * This functions only handles those options which were declared with
+ * FUSE_OPT_KEY
+ *
+ */
 static int jjfs_opt_proc(void* data, const char *arg, int key,
                          struct fuse_args *outargs) {
   switch(key) {
   case KEY_HELP:
-
-
-
-
+    echo_usage(outargs->argv[0]);
+    fuse_opt_add_arg(outargs, "-ho");
+    fuse_main(outargs->argc, outargs->argv, &jjfs_oper, NULL);
+    exit(EXIT_SUCCESS);
   case KEY_VERSION:
-    
-
-
-  default:
-    
+    echo_version();
+    fuse_opt_add_arg(outargs, "--version");
+    fuse_main(outargs->argc, outargs->argv, &jjfs_oper, NULL);
+    exit(EXIT_SUCCESS);
   }
-
-
+  return 1;
 }
 
 
@@ -137,22 +122,19 @@ int main(int argc, char **argv) {
 
   struct fuse_args fargs = FUSE_ARGS_INIT(argc, argv);
 
-  
+  struct jjfs_args jjfsargs;
 
-  jjfs_read_conf(argc, argv);
+  memset(&jjfsargs, 0, sizeof(jjfsargs));
 
+  fuse_opt_parse(&fargs, &jjfsargs, jjfs_opts, jjfs_opt_proc);
+
+  jjfs_read_conf(&jjfsargs);
 
   if (jjfs_is_rebuild()) {
     jjfs_cache_rebuild();
+    
     exit(EXIT_SUCCESS);
   }
 
-  char **fargv = calloc(6, sizeof(char*));
-  fargv[0] = strdup("jjfs");
-  fargv[1] = strdup(jjfs_get_mountpoint());
-  fargv[2] = "-d";
-  fargv[3] = "-s";
-  fargv[4] = "-f";
-  
-  return fuse_main(5, fargv, &jjfs_oper, NULL);
+  return fuse_main(fargs.argc, fargs.argv, &jjfs_oper, NULL);
 }
