@@ -21,9 +21,9 @@
 struct jjfs_args {
   char *server;
   char *user;
-  char *cache_file;
-  char *conf_file;
   char *staging_dir;
+  char *conf_file;
+  char *cache_file;
   char *sshconfig;
   char *entry;
   char *top_dir;
@@ -54,13 +54,15 @@ const char *jjfs_get_user();
 
 const char *jjfs_get_sshconfig();
 
+const char *jjfs_get_staging_dir();
+
 const char *jjfs_get_cache_file();
+
+int jjfs_get_prefetch_bytes();
 
 const int * const jjfs_get_port();
 
 const char *jjfs_get_mountpoint();
-
-const char *jjfs_get_staging_dir();
 
 int jjfs_is_rebuild();
 

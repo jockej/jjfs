@@ -27,10 +27,10 @@
 struct fuse_operations jjfs_oper = {
   .getattr = jjfs_getattr,
   /* .fgetattr = jjfs_fgetattr, */
-  /* .read = jjfs_read, */
-  /* .readbuf = jjfs_read_buf, */
+  .read = jjfs_read,
+  /* .read_buf = jjfs_read_buf, */
   .open = jjfs_open,
-  /* .release = jjfs_release, */
+  .release = jjfs_release,
   .opendir = jjfs_opendir,
   .readdir = jjfs_readdir,
   .releasedir = jjfs_releasedir,
@@ -56,8 +56,8 @@ static struct fuse_opt jjfs_opts[] = {
   JJFS_OPT("-c %s", conf_file, 0),
   JJFS_OPT("--conf-file %s", conf_file, 0),
   JJFS_OPT("conf-file=%s", conf_file, 0),    
-  JJFS_OPT("cache-file=%s", cache_file, 0),
   JJFS_OPT("--port %i", port, 0),
+  JJFS_OPT("cache-file=%s", cache_file, 0),  
   JJFS_OPT("port=%i", port, 0),
   JJFS_OPT("top-dir=%s", top_dir, 0),
   JJFS_OPT("--top-dir %s", top_dir, 0),  
@@ -65,7 +65,7 @@ static struct fuse_opt jjfs_opts[] = {
   JJFS_OPT("sshconfig=%s", sshconfig, 0),
   JJFS_OPT("prefetch-bytes=%i", prefetch_bytes, 0),  
   JJFS_OPT("--rebuild", rebuild, 1),
-  JJFS_OPT("r", rebuild, 1),  
+  JJFS_OPT("-r", rebuild, 1),  
   FUSE_OPT_KEY("-V", KEY_VERSION),
   FUSE_OPT_KEY("--version", KEY_VERSION),
   FUSE_OPT_KEY("-h", KEY_HELP),

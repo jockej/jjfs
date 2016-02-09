@@ -30,7 +30,9 @@ PKG_CHECK_MODULES([FUSE], [fuse])
 AC_SEARCH_LIBS([fuse_main], [fuse], [],
                [AC_MSG_ERROR([Couldn't find libfuse.])])
 
-# AC_SEARCH_LIBS(
+AC_SEARCH_LIBS([pthread_create], [pthread], [PTHREAD_LIBS += -lpthread],
+               [AC_MSG_ERROR([Couldn't find pthreads library])])
+
 
 # Checks for header files.
 AC_FUNC_ALLOCA

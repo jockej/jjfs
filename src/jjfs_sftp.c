@@ -19,6 +19,8 @@
 #include "jjfs_misc.h"
 #include "jjfs_conf.h"
 
+#define JJFS_XFER_BUF_SIZE 16384
+
 ssh_session ssh;
 sftp_session sftp;
 
@@ -81,11 +83,72 @@ int jjfs_disconn() {
   return 0;
 }
 
-int jjfs_start_async_read(const char *path) {
+struct jjfs_read_args {
+  int cache_fd;
+  sftp_file remote;
+  int ret;
+};
 
+static struct jjfs_read_args read_args;
 
+static void *jjfs_async_read(void *raw_args) {
+  char buf[JJFS_XFER_BUF_SIZE];
 
+  struct jjfs_read_args *args = (struct jjfs_read_args*)raw_args;
+  
+  sftp_file remote = args->remote;
+  FILE* local = fdopen(dup(args->cache_fd), "a");
 
-  return 0;
+  int n;  
+  while(1) {
+    if ((n = sftp_read(remote, buf, sizeof(buf))) < 0) {
+      JJFS_DEBUG_PRINT(1, "Read failed\n");
+      args->ret = -1;
+      pthread_exit(NULL);
+    }
+    if (n == 0) break;
+    if (fwrite(buf, 1, n, local) != n) {
+      JJFS_DEBUG_PRINT(1, "Failed to write to chache file\n");
+      args->ret = -1;
+      pthread_exit(NULL);
+    }
+  }
+
+  sftp_close(remote);
+  fclose(local);
+  args->ret = 0;
+  pthread_exit(NULL);
 }
 
+pthread_t jjfs_start_async_read(const char *path, int fd) {
+
+  char remote_path[JJFS_SCRATCH_SIZE];
+
+  /* FIXME: fix the strncat and stuff */
+#ifdef __OpenBSD__
+  strlcpy(remote_path, jjfs_get_top_dir(), JJFS_SCRATCH_SIZE);
+  strlcat(remote_path, path, JJFS_SCRATCH_SIZE);
+#else
+  strncpy(remote_path, jjfs_get_top_dir(), 256); // whatever...
+  strncat(remote_path, path, 1024);
+#endif
+
+  jjfs_conn();
+  
+  sftp_file file = sftp_open(sftp, remote_path, O_RDONLY, 0);
+  if (!file) {
+    JJFS_DEBUG_PRINT(1, "Failed to open remote file %s\n", remote_path);
+    return 0;
+  }
+
+
+  read_args.remote = file;
+  read_args.cache_fd = fd;
+  pthread_t t;
+  if (pthread_create(&t, NULL, jjfs_async_read, &read_args) != 0) {
+    JJFS_DEBUG_PRINT(1,"Failed to create read thread\n");
+    return 0;
+  }
+  
+  return t;
+}

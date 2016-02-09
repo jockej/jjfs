@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include <sys/stat.h>
 #include <fuse.h>
 
 /**
@@ -28,7 +27,7 @@ int jjfs_fgetattr(const char *path, struct stat *st, struct fuse_file_info *fi);
 int jjfs_read(const char *path, char *buf, size_t size, off_t offs,
               struct fuse_file_info *fi);
 
-int jjfs_read_buf(const char *path, struct fuse_bufvec **bufp,
+int jjfs_read_buf(const char *path, struct fuse_bufvec *bufp,
                   size_t size, off_t offs, struct fuse_file_info *fi);
 
 int jjfs_open(const char *path, struct fuse_file_info *fi);

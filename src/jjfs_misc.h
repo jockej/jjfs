@@ -26,9 +26,13 @@
 #define JJFS_SCRATCH_SIZE 2048
 
 #if DEBUG > 0
-#define JJFS_DEBUG_PRINT(lvl, ...)              \
-  if (DEBUG >= lvl)                             \
-    fprintf(stderr, ##__VA_ARGS__)
+#define JJFS_DEBUG_PRINT(lvl, ...)                              \
+  do {                                                          \
+    if (DEBUG >= lvl) {                                         \
+      fprintf(stderr, "JJFS: %s:%u\n", __FILE__, __LINE__);     \
+      fprintf(stderr, ##__VA_ARGS__);                           \
+    }                                                           \
+  } while(0)
 #else
 #define JJFS_DEBUG_PRINT(lvl, ...)
 #endif

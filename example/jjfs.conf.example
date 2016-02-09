@@ -1,5 +1,5 @@
 
-prefetch_bytes = 1000000;
+prefetch_bytes = 10485760;
 
 staging_dir = "~/.jjfs/stage/";
 

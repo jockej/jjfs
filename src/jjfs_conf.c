@@ -41,6 +41,7 @@
 #define JJFS_CACHE_SUFFIX "-cache"
 #endif
 
+
 #ifndef JJFS_DIR
 #define JJFS_DIR "/.jjfs/"
 #endif
@@ -62,14 +63,14 @@ JJFS_STR_VAR(server);
 JJFS_STR_VAR(user);
 JJFS_STR_VAR(top_dir);
 JJFS_STR_VAR(sshconfig);
-JJFS_STR_VAR(cache_file);
 JJFS_STR_VAR(staging_dir);
+JJFS_STR_VAR(cache_file);
 
 const int * const jjfs_get_port() {
   return &port;
 }
 
-int jjfs_prefetch_bytes() {
+int jjfs_get_prefetch_bytes() {
   return prefetch_bytes;
 }
 
@@ -187,7 +188,7 @@ void jjfs_read_conf(struct jjfs_args *args) {
 
   /* Per entry options */
   JJFS_READ_INT_OR_DEFAULT(entry, port, 22);
-JJFS_READ_INT_OR_DEFAULT(entry, rebuild, 0);
+  JJFS_READ_INT_OR_DEFAULT(entry, rebuild, 0);
   JJFS_READ_STR_OR_DEFAULT(entry, user, NULL);
   JJFS_READ_STR_OR_DEFAULT(entry, cache_file, NULL);
 
@@ -218,7 +219,7 @@ JJFS_READ_INT_OR_DEFAULT(entry, rebuild, 0);
   }
 
   /* Expand all '~/' to '$HOME/' */
-  jjfs_tilde_expand(&staging_dir);  
+  jjfs_tilde_expand(&staging_dir);
   jjfs_tilde_expand(&cache_file);
   jjfs_tilde_expand(&sshconfig);
 
@@ -227,15 +228,14 @@ JJFS_READ_INT_OR_DEFAULT(entry, rebuild, 0);
   JJFS_DEBUG_PRINT(1, "Server: %s\n", jjfs_get_server());
   JJFS_DEBUG_PRINT(1, "Port: %d\n", *jjfs_get_port());
   JJFS_DEBUG_PRINT(1, "Top_dir: %s\n", jjfs_get_top_dir());
-  JJFS_DEBUG_PRINT(1, "Cache file: %s\n", jjfs_get_cache_file());
   JJFS_DEBUG_PRINT(1, "User: %s\n", jjfs_get_user());
-  JJFS_DEBUG_PRINT(1, "Staging dir: %s\n", jjfs_get_staging_dir()); 
+  JJFS_DEBUG_PRINT(1, "Staging dir: %s\n", jjfs_get_staging_dir());
+  JJFS_DEBUG_PRINT(1, "Cache file: %s\n", jjfs_get_cache_file());  
 }
 
 void jjfs_conf_free() {
   free((void*)server);
   free((void*)user);
-  free((void*)cache_file);
   free((void*)staging_dir);
   free((void*)top_dir);
   free((void*)sshconfig);              

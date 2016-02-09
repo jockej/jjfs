@@ -18,15 +18,16 @@
  */
 #include <libssh/libssh.h>
 #include <libssh/sftp.h>
+#include <pthread.h>
 
 int jjfs_conn();
 
 int jjfs_disconn();
 
-int jjfs_start_async_read(const char *path);
-
 sftp_session jjfs_sftp();
 
 ssh_session jjfs_ssh();
+
+pthread_t jjfs_start_async_read(const char *path, int fd);
 
 #endif /* ifndef JJFS_SFTP_H */
