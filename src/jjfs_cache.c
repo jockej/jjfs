@@ -18,6 +18,7 @@
 /**
  * This file implements the caching functionality.
  */
+
 #include <stdio.h>
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -47,6 +48,9 @@ jjfs_cache_dir top;
     for (i = 0; i < (lvl); i++) fprintf(stderr, "  ");  \
   } while(0)
 
+/**
+ * Helper function to be called by `jjfs_cache_debug_print'.
+ */
 static void jjfs_cache_debug_print_dir(unsigned level, jjfs_cache_dir *dir) {
   LEVEL_PADDING(level);
   fprintf(stderr, "%s, %lu\n", dir->name, dir->size);
@@ -63,6 +67,9 @@ static void jjfs_cache_debug_print_dir(unsigned level, jjfs_cache_dir *dir) {
   }
 }
 
+/**
+ * Print out the contents of the cache to stderr.
+ */
 static inline void jjfs_cache_debug_print() {
   jjfs_cache_debug_print_dir(0, &top);
 }
@@ -70,6 +77,9 @@ static inline void jjfs_cache_debug_print() {
 
 /**
  * Builds the asn1 structure from `dir' down.
+ *
+ * @param dir A directory to descend recursively into.
+ * @param asn_dir A asn node to fill with the contents of `dir'.
  */
 static int jjfs_build_asn_from_cache(jjfs_cache_dir *dir, JjfsDir_t *asn_dir) {
   JJFS_DEBUG_PRINT(2, "Building ASN.1 structure from dir %s\n",
@@ -103,6 +113,7 @@ static int jjfs_build_asn_from_cache(jjfs_cache_dir *dir, JjfsDir_t *asn_dir) {
 
   return 0;
 }
+
 
 static int jjfs_build_cache_from_asn(jjfs_cache_dir *dir, JjfsDir_t *asn_dir) {
   JJFS_DEBUG_PRINT(2, "Building cache structure from dir %s\n", (char*)asn_dir->name.buf);

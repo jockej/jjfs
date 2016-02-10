@@ -1,3 +1,5 @@
+#ifndef JJFS_CACHE_H
+#define JJFS_CACHE_H
 /*
  * Copyright (C) 2016  Joakim Jalap
  *
@@ -14,14 +16,29 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+/**
+ * This module handles writing of and lookup in the cache.
+ */
+
 #include <stdlib.h>
 
 /**
  * An entry in the cache for a file.
  */
 typedef struct jjfs_cache_file {
+  /**
+   * Name of the file.
+   */
   const char * name;
+  /**
+   * Size of the file in bytes.
+   */
   size_t size;
+  /**
+   * Pointer to the next file in the same directory.
+   * NULL if there are no more files.
+   */
   struct jjfs_cache_file *next;
 } jjfs_cache_file;
 
@@ -29,10 +46,26 @@ typedef struct jjfs_cache_file {
  * An entry in the cache for a directory.
  */
 typedef struct jjfs_cache_dir {
+  /**
+   * Name of this directory.
+   */
   const char *name;
+  /**
+   * Size of this directory (thu number of things it)
+   */
   size_t size;
+  /**
+   * Pointer to NULL terminated linked list of files in this derectory.
+   */
   struct jjfs_cache_file *files;
-  struct jjfs_cache_dir *next, *subdirs;
+  /**
+   * Pointer to next directory on this level, or NULL if no more.
+   */
+  struct jjfs_cache_dir *next;
+  /**
+   * Pointer to a NULL terminated linked list of subdirectories
+   */
+  struct jjfs_cache_dir *subdirs;
 } jjfs_cache_dir;
 
 /**
@@ -47,10 +80,16 @@ typedef enum {
  * An entry in the cache.
  */
 typedef struct {
+  /**
+   * Contents.
+   */
   union {
     jjfs_cache_file *file;
     jjfs_cache_dir *dir;
   };
+  /**
+   * Tag to determine wheteher this is a directory or a file.
+   */
   jjfs_cache_type tag:1;
 } jjfs_cache_entry;
 
@@ -88,3 +127,5 @@ void jjfs_cache_free();
  *function, so if you want to keep it, you have to memcpy it or something.
  */
 jjfs_cache_entry *jjfs_cache_lookup_path(const char *path);
+
+#endif /* ifndef JJFS_CACHE_H */
