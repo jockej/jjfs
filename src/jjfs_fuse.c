@@ -81,7 +81,7 @@ int jjfs_getattr(const char *path, struct stat *st) {
 
 int jjfs_read(const char *path, char *buf, size_t size, off_t offs,
               struct fuse_file_info *fi) {
-  JJFS_DEBUG_PRINT(3, "Request to read %lu bytes from %s at offset %lu\n",
+  JJFS_DEBUG_PRINT(3, "Request to read %lu bytes from %s at offset %llu\n",
                    size, path, offs);
   int fd = fi->fh;
   jjfs_transfer *t;

@@ -66,7 +66,7 @@ JJFS_STR_VAR(sshconfig);
 JJFS_STR_VAR(staging_dir);
 JJFS_STR_VAR(cache_file);
 
-const int * const jjfs_get_port() {
+const int * jjfs_get_port() {
   return &port;
 }
 

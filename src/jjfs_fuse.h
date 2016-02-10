@@ -27,8 +27,8 @@ int jjfs_fgetattr(const char *path, struct stat *st, struct fuse_file_info *fi);
 int jjfs_read(const char *path, char *buf, size_t size, off_t offs,
               struct fuse_file_info *fi);
 
-int jjfs_read_buf(const char *path, struct fuse_bufvec *bufp,
-                  size_t size, off_t offs, struct fuse_file_info *fi);
+/* int jjfs_read_buf(const char *path, struct fuse_bufvec *bufp, */
+                  /* size_t size, off_t offs, struct fuse_file_info *fi); */
 
 int jjfs_open(const char *path, struct fuse_file_info *fi);
 

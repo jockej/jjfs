@@ -60,7 +60,7 @@ const char *jjfs_get_cache_file();
 
 int jjfs_get_prefetch_bytes();
 
-const int * const jjfs_get_port();
+const int * jjfs_get_port();
 
 const char *jjfs_get_mountpoint();
 
