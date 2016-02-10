@@ -1,2 +1,5 @@
 # There's no manually made Makefiles here
 Makefile
+
+# And no special macros
+/m4
