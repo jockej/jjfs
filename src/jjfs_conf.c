@@ -41,18 +41,27 @@
 #define JJFS_CACHE_SUFFIX "-cache"
 #endif
 
-
 #ifndef JJFS_DIR
 #define JJFS_DIR "/.jjfs/"
 #endif
 
-
+/**
+ * Whether or not this is a call to rebuild the cache.
+ */
 static int rebuild = 0;
 
+/**
+ * The entry in the config file.
+ */
 static const char *entry;
 
 static int port, prefetch_bytes;
 
+/**
+ * A little macro to declare a string parameter.
+ *
+ * @param name Name of the parameter.
+ */
 #define JJFS_STR_VAR(name)                            \
   const static char *name;                            \
   const char *jjfs_get_##name() {                     \
@@ -78,22 +87,30 @@ int jjfs_is_rebuild() {
   return rebuild;
 }
 
-/* Construct the libconfig path */
+/**
+ * A macro to construct the libconfig path.
+ *
+ * My hope is that a lot of this can be optimized away by the compiler, haven't
+ * checked though
+ *
+ * @param entry Name of the entry in the config file.
+ * @param var Name of the variable.
+ */
 #ifdef __OpenBSD__
-#define JJFS_PATH(mp, var)                              \
+#define JJFS_PATH(entry, var)                           \
   char path[JJFS_SCRATCH_SIZE] = {0};                   \
-  if (strnlen(mp, 2) > 0) {                             \
-    strlcpy(path, mp, JJFS_SCRATCH_SIZE);               \
+  if (strnlen(entry, 2) > 0) {                          \
+    strlcpy(path, entry, JJFS_SCRATCH_SIZE);            \
     strlcat(path, ".", JJFS_SCRATCH_SIZE);              \
     strlcat(path, #var, JJFS_SCRATCH_SIZE);             \
   } else {                                              \
     strlcpy(path, #var, JJFS_MAX_CONF_ELEM_LEN);        \
   }
 #else
-#define JJFS_PATH(mp, var)                      \
+#define JJFS_PATH(entry, var)                   \
   char path[JJFS_SCRATCH_SIZE] = {0};           \
-  if (strnlen(mp, 2) > 0) {                     \
-    strcpy(path, mp);                           \
+  if (strnlen(entry, 2) > 0) {                  \
+    strcpy(path, entry);                        \
     strcat(path, ".");                          \
     strcat(path, #var);                         \
   } else {                                      \
@@ -101,6 +118,9 @@ int jjfs_is_rebuild() {
   }
 #endif
 
+/**
+ * Help macro to get expansion of line numbers correct.
+ */
 #define JJFS_READ_STR_OR_DIE_LINO(lino, mp, var)                        \
   do {                                                                  \
     char *c;                                                            \
@@ -118,33 +138,71 @@ int jjfs_is_rebuild() {
     }                                                                   \
   } while(0)
 
-#define JJFS_READ_STR_OR_DIE(mp, var)           \
-  JJFS_READ_STR_OR_DIE_LINO(__LINE__, mp, var)
+/**
+ * Read a string variable or die.
+ *
+ * Values set on the command line take precedence over those in the config file.
+ *
+ * This is used for those variables wich do not have a default value.
+ *
+ * @param entry Name of the entry in the config file.
+ * @param var Name of the variable.
+ */
+#define JJFS_READ_STR_OR_DIE(entry, var)           \
+  JJFS_READ_STR_OR_DIE_LINO(__LINE__, entry, var)
 
-#define JJFS_READ_STR_OR_DEFAULT(mp, var, dflt)                         \
+/**
+ * Read a string variable or set a default value.
+ *
+ * Values set on the command line take precedence over those in the config file.
+ *
+ * @param entry Name of the entry in the config file.
+ * @param var Name of the variable.
+ * @param dflt The default value.
+ */
+#define JJFS_READ_STR_OR_DEFAULT(entry, var, dflt)                         \
   do {                                                                  \
     char *c;                                                            \
     if ((c = args->var)) {                                              \
       var = strdup(c);                                                  \
-    } else if (mp) {                                                    \
-      JJFS_PATH(mp, var);                                               \
+    } else if (entry) {                                                    \
+      JJFS_PATH(entry, var);                                               \
       const char *tmp_##var = dflt;                                     \
       config_lookup_string(&cfg, path, &tmp_##var);                     \
       var = tmp_##var ? strdup(tmp_##var) : NULL;                       \
     }                                                                   \
   } while(0)
 
-#define JJFS_READ_INT_OR_DEFAULT(mp, var, dflt)                         \
+/**
+ * Read an integer variable or set a default value.
+ *
+ * Values set on the command line take precedence over those in the config file.
+ *
+ * @param entry Name of the entry in the config file.
+ * @param var Name of the variable.
+ * @param dflt The default value.
+ */
+#define JJFS_READ_INT_OR_DEFAULT(entry, var, dflt)                         \
     do {                                                                \
       if (args->var) {                                                  \
         var = args->var;                                                \
-      } else if (mp) {                                                  \
-        JJFS_PATH(mp, var);                                             \
+      } else if (entry) {                                                  \
+        JJFS_PATH(entry, var);                                             \
         var = dflt;                                                     \
         config_lookup_int(&cfg, path, &var);                            \
       }                                                                 \
     } while(0)    
 
+/**
+ * Expand '~' to users home directory.
+ *
+ * Will free the memory pointed to by *path, and then allocate new memory for the
+ * resulting string, pointing *path to it. It is the responsibility of the
+ * caller to make sure this memory is freed when no longer needed.
+ *
+ * @param path A pointer to a string. This will be set to point to a new string
+ * were '~' has been expanded.
+ */
 static void jjfs_tilde_expand(const char **path) {
   if (!(*path != NULL && strnlen(*path, 3) > 1 &&
         (*path)[0] == '~' && (*path)[1] == '/')) return;
