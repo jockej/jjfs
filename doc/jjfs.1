@@ -11,14 +11,16 @@ mountpoint
 
 .SH DESCRIPTION
 Jjfs is a fuse filesystem meant for a specific use case. It is meant to mount a
-remote filesystem over sftp (a but like sshfs(1)) but to minimize disk activity
+remote filesystem over sftp (a bit like sshfs(1)) but to minimize disk activity
 on the remote system. Therefore a cache is kept on the local system and
 consulted for stats. When reading of a file is requested this file is
 transferred over sftp to a staging directory on the local machine and then read
-from there. 
+from there. This is to minimize disk activity on the remote end (in the temporal
+sense).
 .SH OPTIONS
+Options can be given on several forms.
 .TP
-.BR \-v, \-\-version
+.BR \-V, \-\-version
 Print version and exit.
 .TP
 .BR \-s, \-\-server \fIserver\fR
@@ -48,13 +50,22 @@ Where to mount the system.
 .BR Configuration file.
 jjfs will attempt to read its configuration parameters from a configuration
 file. If no \-c argument is given, the default location is ~/.jjfs.conf. This
-file consists of a few global options and then \fImountpoint-blocks\fR.
+file consists of a few global options and then \fIentries\fR.
+.TP
+.BR Cache file.
+This is were jjfs stores its cache. There will be one cache file per mounted
+file system. If no path for it is given on the command line or in the config
+file, it will default to ~/.jjfs/<entry>-cache, where <entry> is the name of the
+entry in the config file.
+.TP
+.BR Staging directory.
+This is where fetched files will be stored while they are open.
 .SH BUGS
 Tis program surely leaks memory, but its memory use should be modest enough that
 it doesn't really matter.
 .SH EXAMPLE
 .TP
-To use the values set for mountpoint 'my-server' in ~/.jjfs.conf
+To use the values set for entry 'my-server' in ~/.jjfs.conf
 .sp 1
 jjfs my-server
 .sp
@@ -68,8 +79,6 @@ jjfs --port=50000 my-server
 .sp 1
 
 .sp
-.SH SEE ALSO
-.BR jjfs-rebuild(1)
 .SH AUTHOR
 This man page was written by Joakim Jalap (joakim.jalap@fastmail.com).
 
