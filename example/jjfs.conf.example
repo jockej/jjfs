@@ -3,7 +3,7 @@ prefetch_bytes = 10485760;
 
 staging_dir = "~/.jjfs/stage/";
 
-# Name of this mountpoint
+# Name of this entry
 serv1 = {
   # Address of this server
   server = "192.168.2.200";
@@ -20,12 +20,17 @@ serv1 = {
   # it defaults to "~/<name>", so this for example would have been
   # "~/serv1" hadn't it been for the line below.
   mountpoint = "~/smovies";};
-# You can have more mountpoints
+# You can have more entries
 serv2 = {
-  # This is a minimal config, cache file and mountpoint will be set
+  # This is a typical config entry, cache file and mountpoint will be set
   # according to 'name'.
   server = "jockej.mooo.com";
   port = 20022;
   user = "joakim";
+  top_dir = "/home/joakim/jjfs-test";
+};
+# A minmal config entry.
+serv3 = {
+  server = "192.168.2.200";
   top_dir = "/home/joakim/jjfs-test";
 };
