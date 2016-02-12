@@ -4,11 +4,8 @@
 .SH NAME
 jjfs \- Joakim Jalap's file system
 .SH SYNOPSIS
-.B jjfs
-mountpoint
+.B jjfs --entry \fIentry\fR [jjfs_opts] [fuse_opts] mountpoint
 .BR
-.B jjfs
-
 .SH DESCRIPTION
 Jjfs is a fuse filesystem meant for a specific use case. It is meant to mount a
 remote filesystem over sftp (a bit like sshfs(1)) but to minimize disk activity
@@ -18,33 +15,34 @@ transferred over sftp to a staging directory on the local machine and then read
 from there. This is to minimize disk activity on the remote end (in the temporal
 sense).
 .SH OPTIONS
-Options can be given on several forms.
+jjfs options:
 .TP
 .BR \-V, \-\-version
 Print version and exit.
 .TP
-.BR \-s, \-\-server \fIserver\fR
+.BR \-h, \-\-help
+Print help and exit.
+.TP
+.BR \-s \fIserver\fR, \-\-server \fIserver\fR, \-o server=\fIserver\fR
 Server to connect to.
 .TP
-.BR \-p, \-\-port \fIport\fR
+.BR \-p \fIport\fR, \-\-port \fIport\fR, \-o port=\fIport\fR
 Port to connect to.
 .TP
-.BR \-u,\-\-user \fIuser\fR
+.BR \-u \fIuser\fR,\-\-user \fIuser\fR, \-o user=\fIuser\fR
 User to connect as.
 .TP
-.BR \-f,\-\-cache-file \fIcache-file\fR
-The file to store the cache in. Default is \fI~/.jjfs/<name-of-mountpoint>-cache\fR.
+.BR \-o cache\-file=\fIcache\-file\fR
+The file to store the cache in. Default is \fI~/.jjfs/<name-of-entry>-cache\fR.
 .BR
-\-c, \-\-conf-file \fIconfiguration file.\fR
+\-c \fIconfiguration file.\fR, \-\-conf-file \fIconfiguration file.\fR
+.BR \-o conf\-file=\fIconfiguration file.\fR
 File to read configuration from. Default is ~/.jjfs.conf. For a description of
 the format, see section FILES.
 .BR
-\-t, \-\-staging-dir \fIstaging directory\fR
+\-\-staging-dir \fIstaging directory\fR, \-o staging-dir=\fIstaging directory\fR
 Directory where fetched files are stored. This directory must have sufficient
 space available to store any file opened.
-.BR
-\-m, \-\-mount-on \fIwhere-to-mount\fR
-Where to mount the system.
 .SH FILES
 .TP
 .BR Configuration file.
@@ -65,19 +63,21 @@ Tis program surely leaks memory, but its memory use should be modest enough that
 it doesn't really matter.
 .SH EXAMPLE
 .TP
-To use the values set for entry 'my-server' in ~/.jjfs.conf
+To use the values set for entry 'my-server' in ~/.jjfs.conf and mount on ~/movies
 .sp 1
-jjfs my-server
+jjfs -e my-server ~/movies
 .sp
 .TP
 Same as above but on a different port.
 .sp 1
-jjfs --port=50000 my-server
+jjfs --port=50000 -e my-server ~/movies
 .sp
 .TP
-
+Use the general settings for 'my-server', but mount a different directory at a
+different location. This is not good. It's better to make a new entry in the
+configuration file.
 .sp 1
-
+jjfs -e my-server --remote-dir /home/joakim/music --cache-file ~/..jjfs/music-cache ~/music
 .sp
 .SH AUTHOR
 This man page was written by Joakim Jalap (joakim.jalap@fastmail.com).

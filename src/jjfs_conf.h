@@ -31,7 +31,7 @@ struct jjfs_args {
   char *cache_file;
   char *sshconfig;
   char *entry;
-  char *top_dir;
+  char *remote_dir;
   int port;
   int prefetch_bytes;
   int rebuild;
@@ -52,7 +52,7 @@ struct jjfs_args {
  *
  * For most parameters there are defaults which will be set if the parameter is
  * not set in the config file or given on the command line. Some parameters have
- * no defaults, these are `server' and `top_dir' as we cannot possibly guess the
+ * no defaults, these are `server' and `remote_dir' as we cannot possibly guess the
  * value of those.
  *
  * @param args Arguments from the command line.
@@ -72,7 +72,7 @@ const char *jjfs_get_server();
 /**
  * Return the top directory.
  */
-const char *jjfs_get_top_dir();
+const char *jjfs_get_remote_dir();
 
 /**
  * Return the user to connect as.

@@ -70,7 +70,7 @@ static int port, prefetch_bytes;
 
 JJFS_STR_VAR(server);
 JJFS_STR_VAR(user);
-JJFS_STR_VAR(top_dir);
+JJFS_STR_VAR(remote_dir);
 JJFS_STR_VAR(sshconfig);
 JJFS_STR_VAR(staging_dir);
 JJFS_STR_VAR(cache_file);
@@ -242,7 +242,7 @@ void jjfs_read_conf(struct jjfs_args *args) {
 
   /* These must be set */
   JJFS_READ_STR_OR_DIE(entry, server);
-  JJFS_READ_STR_OR_DIE(entry, top_dir);
+  JJFS_READ_STR_OR_DIE(entry, remote_dir);
 
   /* Per entry options */
   JJFS_READ_INT_OR_DEFAULT(entry, port, 22);
@@ -285,7 +285,7 @@ void jjfs_read_conf(struct jjfs_args *args) {
   JJFS_DEBUG_PRINT(1, "Entry: %s\n", entry);
   JJFS_DEBUG_PRINT(1, "Server: %s\n", jjfs_get_server());
   JJFS_DEBUG_PRINT(1, "Port: %d\n", *jjfs_get_port());
-  JJFS_DEBUG_PRINT(1, "Top_dir: %s\n", jjfs_get_top_dir());
+  JJFS_DEBUG_PRINT(1, "Remote_dir: %s\n", jjfs_get_remote_dir());
   JJFS_DEBUG_PRINT(1, "User: %s\n", jjfs_get_user());
   JJFS_DEBUG_PRINT(1, "Staging dir: %s\n", jjfs_get_staging_dir());
   JJFS_DEBUG_PRINT(1, "Cache file: %s\n", jjfs_get_cache_file());  
@@ -295,6 +295,6 @@ void jjfs_conf_free() {
   free((void*)server);
   free((void*)user);
   free((void*)staging_dir);
-  free((void*)top_dir);
+  free((void*)remote_dir);
   free((void*)sshconfig);              
 }

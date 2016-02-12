@@ -1,47 +1,160 @@
 * jjfs
+  A peculiar fuse filesystem.
 
-A peculiar fuse filesystem.
+** Disclaimer:
+
+   This doesn't actually work yet. When I have used it for a few weeks I will
+   remove this disclaimer.
 
 ** Why jjfs?
 
 *** Background
 
-I have my movies on a server in my living room. They are on a 6 x 3TB raidz2
-array. Out of concern for the environment and my hearing I want to keep those
-disks spinning as little as possible, they are set to spin down after ten
-minutes (or something like that).
+    I have my movies on a server in my living room. They are on a 6 x 3TB raidz2
+    array. Out of concern for the environment and my hearing I want to keep those
+    disks spinning as little as possible, they are set to spin down after ten
+    minutes (or something like that). So when I transfer files I want to do it as
+    fast as possible.
 
 *** What I do now
 
-Right now I do something like the following when I wan't to watch a movie:
+    Right now I do something like the following when I wan't to watch a movie:
 
-- Navigate to a 'temp' directory on my ssd (=~/tmpvideos= in my case).
-- Sftp to my server.
-- Browse the files to find a movie I want to see.
-- =get -r= the directory of that movie.
-- Wait for the transfer to complete (usually like one minute).
-- Start mplayer on the fetched file.
+    - Navigate to a 'temp' directory on my ssd (=~/tmpvideos= in my case).
+    - Sftp to my server.
+    - Browse the files to find a movie I want to see.
+    - =get -r= the directory of that movie.
+    - Wait for the transfer to complete (usually like one minute).
+    - Start mplayer on the fetched file.
 
 *** What I'd like to do
 
-- Browse the files like I browse any other files.
-- Start mplayer directly on that file.
+    - Browse the files like I browse any other files.
+    - Start mplayer directly on that file.
 
 *** Solution
 
-One solution which would allow me to do what I'd like would be to use sshfs,
-however that would keep the rust spinning on the server, something I definitely
-want to avoid.
+    One solution which would allow me to do what I'd like would be to use sshfs,
+    however that would keep the rust spinning on the server, something I definitely
+    want to avoid.
 
-So 
+    So what =jjfs= does in order to minimize active disk time on the remote is to
+    build a local cache on the local machine, which contains just the names, sizes
+    and structure of the remote file system. Thus when just moving around in the
+    file system, all calls to =stat(2)= are looked up in the local cache.
+
+    If you change the file system on the remote machine you will have to update the
+    local cache manually. This is done with the =-r= or =--rebuild= option.
 
 ** Building and installing
 
+*** Prerequisites
+    - The =asn1c= ASN.1 compiler and libraries
+    - =libfuse=
+    - =libconfig=
+    - =libssh=
+    - =pthreads=
+    - The autotools
 
+*** OpenBSD
+
+    On OpenBSD I have to configure like this to find all the dependencies, assuming
+    you installed =asn1c= were it ought to be.
+
+    #+BEGIN_ASCII
+    $ autoreconf -i
+    $ ./configure CPPFLAGS="-I/usr/local/include -I/usr/local/share/asn1c" LDFLAGS="-L/usr/local/lib" --prefix=/usr/local
+    $ make
+    # make install
+    #+END_ASCII
+
+*** Arch Linux
+
+    On Arch I configure like so (since they use =/usr= as prefix):
+
+    #+BEGIN_ASCII
+    $ autoreconf -i
+    $ ./configure CPPFLAGS="-I/usr/share/asn1c" --prefix=/usr
+    $ make
+    # make install
+    #+END_ASCII
 
 ** Using
 
+   To use =jjfs= you first have to create a config file. The default location for
+   that is =~/.jjfs/jjfs.conf=, if you want something else you will have to supply
+   the path on the command line.
 
+*** Example config
 
+   Here's an example config file:
 
-** Example
+   #+BEGIN_ASCII
+
+prefetch_bytes = 10485760;
+
+staging_dir = "~/.jjfs/stage/";
+
+# Name of this entry
+# How many bytes to fetch before returning from open().
+# Default is 10485760
+prefetch_bytes = 10485760;
+
+# Directory to store fetched files.
+# Default is ~/.jjfs/stage
+staging_dir = "~/.jjfs/stage/";
+
+# Then come the entries. These basically describe the remote directories you
+# want mounted and how you want them to be mounted.
+
+# Name of this entry
+serv1 = {
+# Address of this server. Must be given
+server = "192.168.2.200";
+# Port to connect to. Default is 22
+port = 22;
+# User to connect as
+user = "joakim";
+# Top dir on the server. This _must_ be an absolute path, as I can't be arsed
+# to find the value of $HOME on the remote machine.
+top_dir = "/home/joakim/jjfs-test";
+# Cache file, default is '~/.jjfs/<name-of-entry>-cache'
+cache_file = "~/.jjfs/movies-cache";
+# You can have more entries
+serv2 = {
+# This is a typical config entry, cache file and mountpoint will be set
+# according to 'name'.
+server = "jockej.mooo.com";
+port = 20022;
+user = "joakim";
+top_dir = "/home/joakim/jjfs-test";
+};
+# A minmal config entry.
+serv3 = {
+server = "192.168.2.200";
+top_dir = "/home/joakim/jjfs-test";
+};
+   #+END_ASCII
+
+** TODO:
+   
+   - Stat the staging_dir to make sure there's room before starting transfer.
+   - Free ssh and sftp sessions.
+   - Fix memory leakes. The worst ones anyway.
+   - Fix error handling.
+
+** FAQ
+
+*** Why not just keep the transferred files in RAM?
+
+    Because they can be quite big. Anyway, if you want to achieve the same
+    effect, just make =staging_dir= a directory mounted in a =tmpfs= file
+    system.
+
+*** What's up with all the funky macros?
+
+    Because I like macros, and it's my project. That's what's up.
+
+*** Is it well tested?
+
+    You tell me.

@@ -49,6 +49,7 @@ enum {
 
 static struct fuse_opt jjfs_opts[] = {
   JJFS_OPT("--entry %s", entry, 0),
+  JJFS_OPT("-e %s", entry, 0),  
   JJFS_OPT("--server %s", server, 0),  
   JJFS_OPT("server=%s", server, 0),  
   JJFS_OPT("--user %s", user, 0),
@@ -57,10 +58,11 @@ static struct fuse_opt jjfs_opts[] = {
   JJFS_OPT("--conf-file %s", conf_file, 0),
   JJFS_OPT("conf-file=%s", conf_file, 0),    
   JJFS_OPT("--port %i", port, 0),
+  JJFS_OPT("-p %i", port, 0),  
   JJFS_OPT("cache-file=%s", cache_file, 0),  
   JJFS_OPT("port=%i", port, 0),
-  JJFS_OPT("top-dir=%s", top_dir, 0),
-  JJFS_OPT("--top-dir %s", top_dir, 0),  
+  JJFS_OPT("remote-dir=%s", remote_dir, 0),
+  JJFS_OPT("--remote-dir %s", remote_dir, 0),  
   JJFS_OPT("staging-dir=%s", staging_dir, 0),
   JJFS_OPT("sshconfig=%s", sshconfig, 0),
   JJFS_OPT("prefetch-bytes=%i", prefetch_bytes, 0),  

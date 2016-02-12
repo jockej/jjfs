@@ -261,7 +261,7 @@ int jjfs_cache_rebuild() {
   top.name = "/";
   top.size = 11;
   if (jjfs_conn() == -1) return -1;
-  jjfs_build_cache_sftp(jjfs_sftp(), jjfs_get_top_dir(), &top);
+  jjfs_build_cache_sftp(jjfs_sftp(), jjfs_get_remote_dir(), &top);
   jjfs_disconn();
 
 #if DEBUG > 2

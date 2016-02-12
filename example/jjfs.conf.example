@@ -1,25 +1,27 @@
-
+# How many bytes to fetch before returning from open().
+# Default is 10485760
 prefetch_bytes = 10485760;
 
+# Directory to store fetched files.
+# Default is ~/.jjfs/stage
 staging_dir = "~/.jjfs/stage/";
+
+# Then come the entries. These basically describe the remote directories you
+# want mounted and how you want them to be mounted.
 
 # Name of this entry
 serv1 = {
-  # Address of this server
+  # Address of this server. Must be given
   server = "192.168.2.200";
-  # Port to connect to
+  # Port to connect to. Default is 22
   port = 22;
   # User to connect as
   user = "joakim";
   # Top dir on the server. This _must_ be an absolute path, as I can't be arsed
   # to find the value of $HOME on the remote machine.
-  top_dir = "/home/joakim/jjfs-test";
-  # Cache file, default is '~/.jjfs/<name>-cache'
+  remote_dir = "/home/joakim/jjfs-test";
+  # Cache file, default is '~/.jjfs/<name-of-entry>-cache'
   cache_file = "~/.jjfs/movies-cache";
-  # Default mountpint, can be overridden when mounting. If none is given,
-  # it defaults to "~/<name>", so this for example would have been
-  # "~/serv1" hadn't it been for the line below.
-  mountpoint = "~/smovies";};
 # You can have more entries
 serv2 = {
   # This is a typical config entry, cache file and mountpoint will be set
@@ -27,10 +29,10 @@ serv2 = {
   server = "jockej.mooo.com";
   port = 20022;
   user = "joakim";
-  top_dir = "/home/joakim/jjfs-test";
+  remote_dir = "/home/joakim/jjfs-test";
 };
 # A minmal config entry.
 serv3 = {
   server = "192.168.2.200";
-  top_dir = "/home/joakim/jjfs-test";
+  remote_dir = "/home/joakim/jjfs-test";
 };
