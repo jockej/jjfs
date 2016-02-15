@@ -160,13 +160,13 @@ int jjfs_is_rebuild() {
  * @param var Name of the variable.
  * @param dflt The default value.
  */
-#define JJFS_READ_STR_OR_DEFAULT(entry, var, dflt)                         \
+#define JJFS_READ_STR_OR_DEFAULT(entry, var, dflt)                      \
   do {                                                                  \
     char *c;                                                            \
     if ((c = args->var)) {                                              \
       var = strdup(c);                                                  \
-    } else if (entry) {                                                    \
-      JJFS_PATH(entry, var);                                               \
+    } else if (entry) {                                                 \
+      JJFS_PATH(entry, var);                                            \
       const char *tmp_##var = dflt;                                     \
       config_lookup_string(&cfg, path, &tmp_##var);                     \
       var = tmp_##var ? strdup(tmp_##var) : NULL;                       \
