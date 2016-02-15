@@ -23,41 +23,42 @@ Print version and exit.
 .BR \-h, \-\-help
 Print help and exit.
 .TP
-.BR \-s \fIserver\fR, \-\-server \fIserver\fR, \-o server=\fIserver\fR
+.BR \-s\ \fIserver\fR, \-\-server\ \fIserver\fR, \-o\ server=\fIserver\fR
 Server to connect to.
 .TP
-.BR \-p \fIport\fR, \-\-port \fIport\fR, \-o port=\fIport\fR
+.BR \-p\ \fIport\fR, \-\-port\ \fIport\fR, \-o\ port=\fIport\fR
 Port to connect to.
 .TP
-.BR \-u \fIuser\fR,\-\-user \fIuser\fR, \-o user=\fIuser\fR
+.BR \-u\ \fIuser\fR,\-\-user\ \fIuser\fR, \-o\ user=\fIuser\fR
 User to connect as.
 .TP
-.BR \-o cache\-file=\fIcache\-file\fR
+.BR \-o\ cache\-file=\fIcache\-file\fR
 The file to store the cache in. Default is \fI~/.jjfs/<name-of-entry>-cache\fR.
-.BR
-\-c \fIconfiguration file.\fR, \-\-conf-file \fIconfiguration file.\fR
-.BR \-o conf\-file=\fIconfiguration file.\fR
+.TP
+.BR \-c\ \fIconfiguration file.\fR, \-\-conf-file \fIconfiguration file.\fR
+.BR \-o\ conf\-file=\fIconfiguration file.\fR
 File to read configuration from. Default is ~/.jjfs.conf. For a description of
 the format, see section FILES.
-.BR
-\-\-staging-dir \fIstaging directory\fR, \-o staging-dir=\fIstaging directory\fR
+.TP
+.BR \-\-staging-dir\ \fIstaging directory\fR, \-o\ staging-dir=\fIstaging directory\fR
 Directory where fetched files are stored. This directory must have sufficient
 space available to store any file opened.
 .SH FILES
 .TP
-.BR Configuration file.
+.BR Configuration\ file.
 jjfs will attempt to read its configuration parameters from a configuration
 file. If no \-c argument is given, the default location is ~/.jjfs.conf. This
 file consists of a few global options and then \fIentries\fR.
 .TP
-.BR Cache file.
+.BR Cache\ file.
 This is were jjfs stores its cache. There will be one cache file per mounted
 file system. If no path for it is given on the command line or in the config
 file, it will default to ~/.jjfs/<entry>-cache, where <entry> is the name of the
 entry in the config file.
 .TP
-.BR Staging directory.
-This is where fetched files will be stored while they are open.
+.BR Staging\ directory.
+This is where fetched files will be stored while they are open. Files are
+deleted when closed, so this directory should be empty when no files are open.
 .SH BUGS
 Tis program surely leaks memory, but its memory use should be modest enough that
 it doesn't really matter.
