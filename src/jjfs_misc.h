@@ -53,4 +53,20 @@
     if (!thing) JJFS_DIE(__VA_ARGS__);          \
   } while (0)
 
+#define JJFS_TRY_EQ(call, exp, ...)             \
+  do {                                          \
+    if ((call) == exp) {                        \
+      fprintf(stderr, ##__VA_ARGS__);           \
+      return -1;                                \
+    }                                           \
+  } while(0)
+
+#define JJFS_TRY_NE(call, exp, ...)             \
+  do {                                          \
+    if ((call) != exp) {                        \
+      fprintf(stderr, ##__VA_ARGS__);           \
+      return -1;                                \
+    }                                           \
+  } while(0)
+
 #endif /* ifndef JJFS_MISC_H */

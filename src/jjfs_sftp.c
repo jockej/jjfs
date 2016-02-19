@@ -32,23 +32,6 @@ sftp_session jjfs_sftp() {
   return sftp;
 }
 
-#define JJFS_TRY_EQ(call, exp, ...)             \
-  do {                                          \
-    if ((call) == exp) {                        \
-      fprintf(stderr, ##__VA_ARGS__);           \
-      return -1;                                \
-    }                                           \
-  } while(0)
-
-#define JJFS_TRY_NE(call, exp, ...)             \
-  do {                                          \
-    if ((call) != exp) {                        \
-      fprintf(stderr, ##__VA_ARGS__);           \
-      return -1;                                \
-    }                                           \
-  } while(0)
-
-
 int jjfs_conn() {
   ssh = ssh_new();
 
@@ -97,6 +80,7 @@ static void *jjfs_async_read(void *raw_args) {
   struct jjfs_read_args *args = (struct jjfs_read_args*)raw_args;
   
   sftp_file remote = args->remote;
+  // TODO: check return status here
   FILE* local = fdopen(dup(args->cache_fd), "a");
 
   int n;  
@@ -108,13 +92,14 @@ static void *jjfs_async_read(void *raw_args) {
     }
     if (n == 0) break;
     if (fwrite(buf, 1, n, local) != n) {
-      JJFS_DEBUG_PRINT(1, "Failed to write to chache file\n");
+      JJFS_DEBUG_PRINT(1, "Failed to write to cache file\n");
       args->ret = -1;
       pthread_exit(NULL);
     }
   }
 
   sftp_close(remote);
+  jjfs_disconn();
   fclose(local);
   args->ret = 0;
   pthread_exit(NULL);
@@ -140,7 +125,6 @@ pthread_t jjfs_start_async_read(const char *path, int fd) {
     JJFS_DEBUG_PRINT(1, "Failed to open remote file %s\n", remote_path);
     return 0;
   }
-
 
   read_args.remote = file;
   read_args.cache_fd = fd;
